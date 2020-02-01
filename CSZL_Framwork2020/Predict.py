@@ -11,7 +11,7 @@ import Models
 import FileIO
 
 import datetime
-
+import time
 
 
 class Predict(object):
@@ -24,7 +24,8 @@ class Predict(object):
         REAL_Get.real_get_adj_change(adjpath)
 
         #选择特征工程
-        cur_fe=FE.FEg30b()    
+        #切换为e
+        cur_fe=FE.FEg30e()    
         cur_fe.real_FE()
 
         #
@@ -53,3 +54,49 @@ class Predict(object):
 
         asdad=1
 
+    def PredictBackRound(self):
+
+        cur_date=datetime.datetime.now().strftime("%Y-%m-%d")
+        change_flag=0
+        while(True):
+            date=datetime.datetime.now()
+            day = date.weekday()
+            if(day>4):
+                time.sleep(10000)
+                continue
+                dawd=5
+            if(day==4):
+                cur_inputflag=1
+            else:
+                cur_inputflag=0
+
+            if(self.CSZL_TimeCheck()):       
+
+                if(cur_inputflag==1):
+                    self.TodayPredict5Day()
+                else:
+                    self.TodayPredict5Day()
+
+                time.sleep(10000) 
+        
+
+            print(date)
+            time.sleep(10)
+
+    def CSZL_TimeCheck(self):
+        global CurHour
+        global CurMinute
+
+
+
+        CurHour=int(time.strftime("%H", time.localtime()))
+        CurMinute=int(time.strftime("%M", time.localtime()))
+
+        caltemp=CurHour*100+CurMinute
+
+        #return True
+
+        if (caltemp>=1453 and caltemp<=1500):
+            return True
+        else:
+            return False 

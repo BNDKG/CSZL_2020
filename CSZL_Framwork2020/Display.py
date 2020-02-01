@@ -187,9 +187,9 @@ class Display(object):
 
         new_train_times=4
 
-        #Y=[-12,-8,-3,-2,-1,1,2,3,12,18]
+        Y=[-12,-8,-3,-2,-1,1,2,3,12,18]
 
-        Y=[-12,-6,-3,-2,-1,1,2,3,6,12]
+        #Y=[-12,-6,-3,-2,-1,1,2,3,6,12]
 
         all_csv_path=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)
         all_csv_path=all_csv_path.loc[:,['ts_code','trade_date','pct_chg']]
@@ -737,11 +737,11 @@ class Display(object):
         new_train_times=4
 
         #Y=[-12,-6,-3,-2,-1,1,2,3,6,12]
-        Y=[-12,-6,-3,-2,-1,1,2,3,8,18]
+        Y=[-12,-6,-3,-2,-1,1,2,3,10,18]
         #Y2=[-12,-8,-3,-2,-1,1,2,3,6,12]
         #Y=[-12,-7,-3,-2,-1,1,0,1,4,7]
 
-        codechoice=30
+        codechoice=1
         dayrange=5
 
         all_csv_path=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)

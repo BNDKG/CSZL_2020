@@ -22,41 +22,43 @@ class BackTesting(object):
         ##刷新复权因子
         #SuperGet.updatedaily_adj_factor('20130101','20200114')
 
-        ###刷新经济指标
-        ##dataset_adj_train=SuperGet.updatedaily_long_factors('20150101','20191108')
+        ##刷新经济指标
+        #dataset_adj_train=SuperGet.updatedaily_long_factors('20130101','20200114')
 
         ###刷新个股波动范围
         #SuperGet.update_stk_limit('20130101','20200114')
 
 
         ##选择日期
-        dataset_adj_train=SuperGet.getDataSet_adj_factor('20130101','20160101')
-        dataset_adj_test=SuperGet.getDataSet_adj_factor('20160101','20200114')
+        dataset_adj_train=SuperGet.getDataSet_adj_factor('20130101','20170101')
+        dataset_adj_test=SuperGet.getDataSet_adj_factor('20170101','20200114')
 
-        dataset_train=SuperGet.getDataSet('20130101','20160101')
-        dataset_test=SuperGet.getDataSet('20160101','20200114')
+        dataset_train=SuperGet.getDataSet('20130101','20170101')
+        dataset_test=SuperGet.getDataSet('20170101','20200114')
 
-        #测试添加长期指标
+        #测#试添加长期指标
 
-        #dataset_long_train=SuperGet.getDataSet_long_factor('20121212','20160620')
-        #dataset_long_test=SuperGet.getDataSet_long_factor('20160621','20190921')
+        #dataset_long_train=SuperGet.getDataSet_long_factor('20121212','20170620')
+        #dataset_long_test=SuperGet.getDataSet_long_factor('20170621','20190921')
 
-        #添加确定的stflag防止模型与实际情况的区别
-        dataset_stk_limit_train=SuperGet.getDataSet_stk_limit('20130101','20160101')
-        dataset_stk_limit_test=SuperGet.getDataSet_stk_limit('20160101','20200114')
+        ##添加确定的stflag防止模型与实际情况的区别
+        dataset_stk_limit_train=SuperGet.getDataSet_stk_limit('20130101','20170101')
+        dataset_stk_limit_test=SuperGet.getDataSet_stk_limit('20170101','20200114')
 
         ##测试添加资金量指标
-        #dataset_moneyflow_train=SuperGet.getDataSet_moneyflow('20130101','20170101')
-        #dataset_moneyflow_test=SuperGet.getDataSet_moneyflow('20170101','20200101')
+        dataset_moneyflow_train=SuperGet.getDataSet_moneyflow('20130101','20170101')
+        dataset_moneyflow_test=SuperGet.getDataSet_moneyflow('20170101','20200114')
 
         #选择特征工程
         #cur_fe=FE.FE3()
         #cur_fe=FE.FEg30()
         #cur_fe=FE.FEh30f()
-        cur_fe=FE.FEg30b()
+        #cur_fe=FE.FEg30b()
+        cur_fe=FE.FEg30e()
+        #cur_fe=FE.FEg30q()
 
-        FE_train=cur_fe.create(dataset_train,dataset_adj_train,dataset_stk_limit_train)
-        FE_test=cur_fe.create(dataset_test,dataset_adj_test,dataset_stk_limit_test)
+        FE_test=cur_fe.create(dataset_train,dataset_adj_train,dataset_stk_limit_train,dataset_moneyflow_train)
+        FE_train=cur_fe.create(dataset_test,dataset_adj_test,dataset_stk_limit_test,dataset_moneyflow_test)
         #FE_train=cur_fe.create(dataset_train,dataset_adj_train,dataset_moneyflow_train)
         #FE_test=cur_fe.create(dataset_test,dataset_adj_test,dataset_moneyflow_test)
 

@@ -47,11 +47,13 @@ if __name__ == '__main__':
     #df = pro.stk_limit(ts_code='000018.SZ', start_date='20191115', end_date='20191230')
     #print(df)
     zzz=Predict.Predict()
+    #zzz.PredictBackRound()
     zzz.TodayPredict5Day()
 
     bt=BT.BackTesting()
 
     bt.backTesting()
+
 
     bt.backtesting_forpara()
 
