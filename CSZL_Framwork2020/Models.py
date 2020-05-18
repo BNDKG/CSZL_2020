@@ -330,7 +330,8 @@ class LGBmodel(BaseModel):
 
         data1['mix']=0
         #multlist=[-10,-3,-2,-1,0,0,1,2,3,10]
-        multlist=[-12,-8,-3,-2,-1,1,2,3,10,18]
+        multlist=[-12,-6,-3,-2,-1,1,2,3,6,12]
+
         #[-12,-8,-3,-2,-1,1,2,3,10,18]
         #[-7,-4,-3,-2,-1,1,2,3,4,12]
 
@@ -346,3 +347,173 @@ class LGBmodel(BaseModel):
 
         dawd=1
 
+class LGBmodel_notrank(BaseModel):
+
+
+    def core_predict(self,train,modelpath,savepath):
+        """Subclass must implement this."""
+
+        new_train_times=4
+
+        train=train.reset_index(drop=True)
+        train2=train.copy(deep=True)
+
+        y_train = np.array(train['tomorrow_chg'])
+        train.drop(['tomorrow_chg','ts_code','trade_date'],axis=1,inplace=True)
+
+        for counter in range(new_train_times):
+            modelpath_new=os.path.splitext(modelpath)[0]+str(counter)+".pkl"
+
+            lgb_model = joblib.load(modelpath_new)
+
+            dsadwd=lgb_model.feature_importances_
+            print(dsadwd)
+            pred_test = lgb_model.predict_proba(train)
+
+            data1 = pd.DataFrame(pred_test)
+
+            data1['mix']=0
+            #multlist=[-12,-5,-3,-2,-1.5,-1,-0.75,-0.5,-0.25,0,0,0.25,0.5,0.75,1,1.5,2,3,5,12]
+            #multlist=[-10,-3,-2,-1,0,0,1,2,3,10]
+            multlist=[-8,-8,-3,-2,-1,1,2,3,7,12]
+            #multlist=[-8,-8,0,7,12]
+
+            for i in range(10):
+                buffer=data1[i]*multlist[i]
+                data1['mix']=data1['mix']+buffer
+
+            train3=train2.join(data1)
+    
+            print(train3)
+
+            savepath_new=os.path.splitext(savepath)[0]+str(counter)+".csv"
+            train3.to_csv(savepath_new)
+
+        return 2
+
+
+    def core_train(self,train,savepath):
+
+        #readstring='ztrain'+year+'.csv'
+        
+        #readstring=path+'.csv'
+
+        ##train=pd.read_csv(readstring,index_col=0,header=0,nrows=10000)
+        #train=pd.read_csv(readstring,index_col=0,header=0)
+        train=train.reset_index(drop=True)
+
+        y_train = np.array(train['tomorrow_chg'])
+        train.drop(['tomorrow_chg','ts_code','trade_date'],axis=1,inplace=True)
+
+        #x=train.shape[1]
+        #y=train.shape[0]
+        #Random01=np.random.rand(y, x)
+        #Random01[Random01<0.1]=-20
+        #Random01[Random01>0]=0
+        ##print(Random01)
+
+        ##print(train)
+        #train=train+Random01
+        #train[Random01<0]=3
+        #print(train)
+        train_ids = train.index.tolist()
+
+        splitno=int(len(train_ids)*0.70)
+        splitno10=int(len(train_ids)*0.15)
+        splitno11=int(len(train_ids)*0.85)
+        splitno20=int(len(train_ids)*0.35)
+        splitno21=int(len(train_ids)*0.65)
+
+        train_index_list=[]
+        test_index_list=[]
+        #1
+        train_index_list.append(train_ids[:splitno])
+        test_index_list.append(train_ids[(splitno+10000):])
+        #2
+        train_index_list.append(train_ids[(len(train_ids)-splitno):])
+        test_index_list.append(train_ids[:(len(train_ids)-splitno-10000)])
+        #3
+        train_index_list.append(train_ids[splitno10:splitno11])
+        buffer=train_ids[:(splitno10-10000)]
+        buffer.extend(train_ids[(splitno11+10000):])
+        test_index_list.append(buffer)
+        #4
+        buffer=train_ids[:(splitno20)]
+        buffer.extend(train_ids[(splitno21):])
+        train_index_list.append(buffer)
+        test_index_list.append(train_ids[(splitno20+10000):(splitno21-10000)])
+
+        train=train.values
+
+        new_train_times=4
+
+        for counter in range(new_train_times):
+       
+            X_fit, X_val = train[train_index_list[counter]],train[test_index_list[counter]]
+            y_fit, y_val = y_train[train_index_list[counter]], y_train[test_index_list[counter]]
+
+            lgb_model = lgb.LGBMClassifier(max_depth=-1,
+                                            n_estimators=220,
+                                            learning_rate=0.05,
+                                            num_leaves=2**8-1,
+                                            colsample_bytree=0.6,
+                                            objective='multiclass', 
+                                            num_class=10,
+                                            n_jobs=-1)
+                                   
+
+            #lgb_model.fit(X_fit, y_fit, eval_metric='multi_error',
+            #                eval_set=[(X_val, y_val)], 
+            #                verbose=100, early_stopping_rounds=1000)
+            lgb_model.fit(X_fit, y_fit, eval_metric='multi_error',
+                            eval_set=[(X_val, y_val)], 
+                            verbose=100, early_stopping_rounds=None)
+     
+            savepath_new=os.path.splitext(savepath)[0]+str(counter)+".pkl"
+            joblib.dump(lgb_model,savepath_new)           
+
+
+
+
+        #X_train,X_test,y_train,y_test=train_test_split(iris.data,iris.target,test_size=0.3)        
+
+        return 2
+        #return super().train(dataset)
+
+    def real_lgb_predict(self,modelpath,outputname):
+        readstring='today_train.csv'
+
+        #train=pd.read_csv(readstring,index_col=0,header=0,nrows=10000)
+        train=pd.read_csv(readstring,index_col=0,header=0)
+        train=train.reset_index(drop=True)
+        train2=train.copy(deep=True)
+
+        #train.drop(['tomorrow_chg','tomorrow_chg_rank','ts_code','trade_date'],axis=1,inplace=True)
+        train.drop(['ts_code','trade_date'],axis=1,inplace=True)
+
+
+        lgb_model = joblib.load(modelpath)
+
+        dsadwd=lgb_model.feature_importances_
+
+        pred_test = lgb_model.predict_proba(train)
+
+        data1 = pd.DataFrame(pred_test)
+
+        data1['mix']=0
+        #multlist=[-10,-3,-2,-1,0,0,1,2,3,10]
+        multlist=[-12,-8,-3,-2,-1,1,2,3,10,18]
+        #[-12,-8,-3,-2,-1,1,2,3,10,18]
+        #[-7,-4,-3,-2,-1,1,2,3,4,12]
+
+        for i in range(10):
+            buffer=data1[i]*multlist[i]
+            data1['mix']=data1['mix']+buffer
+
+        train2=train2.join(data1)
+    
+        print(train2)
+        
+        train2.to_csv(outputname)
+
+        dawd=1

@@ -218,6 +218,81 @@ class Dataget(object):
                 print("错误，请先调用updatedaily_adj_factor或检查其他问题")
         return filename
 
+    def updatedaily_long_factors_old(self,start_date,end_date):
+
+        #增量更新
+
+        #输出路径为"./Database/Dailydata.csv"
+
+        #检查目录是否存在
+        FileIO.FileIO.mkdir('./Database')
+
+        #读取历史数据防止重复
+        try:
+            df_test=pd.read_csv('./Database/Daily_long_factor.csv',index_col=0,header=0)
+            date_list_old=df_test['trade_date'].unique().astype(str)
+
+            xxx=1
+        except Exception as e:
+            #没有的情况下list为空
+            date_list_old=[]
+            df_test=pd.DataFrame(columns=('ts_code','trade_date','turnover_rate','volume_ratio','pe','pb','total_mv'))
+
+
+        #读取token
+        f = open('token.txt')
+        token = f.read()     #将txt文件的所有内容读入到字符串str中
+        f.close()
+
+        pro = ts.pro_api(token)
+        date=pro.query('trade_cal', start_date=start_date, end_date=end_date)
+
+        date=date[date["is_open"]==1]
+        bufferlist=date["cal_date"]
+
+        get_list=bufferlist[~bufferlist.isin(date_list_old)].values
+        first_date=get_list[0]
+        next_date=get_list[1:]
+
+        df_all=pro.daily_basic(ts_code='', trade_date=first_date, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,total_mv')
+
+        zcounter=0
+        zall=get_list.shape[0]
+        for singledate in next_date:
+            zcounter+=1
+            print(zcounter*100/zall)
+
+            dec=5
+            while(dec>0):
+                try:
+                    time.sleep(1)
+                    #df = pro.adj_factor(ts_code='', trade_date=singledate)
+
+                    df = pro.daily_basic(ts_code='', trade_date=singledate, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,total_mv')
+
+                    df_all=pd.concat([df_all,df])
+
+                    #df_last
+                    #print(df_all)
+                    break
+
+                except Exception as e:
+                    dec-=1
+                    time.sleep(5-dec)
+
+            if(dec==0):
+                fsefe=1
+
+        df_all=pd.concat([df_all,df_test])
+        df_all[["trade_date"]]=df_all[["trade_date"]].astype(int)
+        df_all.sort_values("trade_date",inplace=True)
+
+        df_all=df_all.reset_index(drop=True)
+
+        df_all.to_csv('./Database/Daily_long_factor.csv')
+
+        dsdfsf=1
+
     def updatedaily_long_factors(self,start_date,end_date):
 
         #增量更新
@@ -236,7 +311,7 @@ class Dataget(object):
         except Exception as e:
             #没有的情况下list为空
             date_list_old=[]
-            df_test=pd.DataFrame(columns=('ts_code','trade_date','turnover_rate','volume_ratio','pe','pb'))
+            df_test=pd.DataFrame(columns=('ts_code','trade_date','turnover_rate','volume_ratio','pe','pb','total_mv'))
 
 
         #读取token
@@ -251,37 +326,42 @@ class Dataget(object):
         bufferlist=date["cal_date"]
 
         get_list=bufferlist[~bufferlist.isin(date_list_old)].values
-        first_date=get_list[0]
-        next_date=get_list[1:]
+        if len(get_list)<2:
+            if len(get_list)==1:
+                first_date=get_list[0]
+                df_all=pro.daily_basic(ts_code='', trade_date=first_date, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,total_mv')
+            else:
+                return
+        else:
+            first_date=get_list[0]
+            next_date=get_list[1:]
 
-        df_all=pro.daily_basic(ts_code='', trade_date=first_date, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb')
+            df_all=pro.daily(trade_date=first_date)
 
-        zcounter=0
-        zall=get_list.shape[0]
-        for singledate in next_date:
-            zcounter+=1
-            print(zcounter*100/zall)
+            zcounter=0
+            zall=get_list.shape[0]
+            for singledate in next_date:
+                zcounter+=1
+                print(zcounter*100/zall)
 
-            dec=5
-            while(dec>0):
-                try:
-                    time.sleep(1)
-                    #df = pro.adj_factor(ts_code='', trade_date=singledate)
+                dec=5
+                while(dec>0):
+                    try:
+                        time.sleep(1)
+                        df = pro.daily_basic(ts_code='', trade_date=singledate, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,total_mv')
+                        
+                        df_all=pd.concat([df_all,df])
 
-                    df = pro.daily_basic(ts_code='', trade_date=singledate, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb')
+                        #df_last
+                        #print(df_all)
+                        break
 
-                    df_all=pd.concat([df_all,df])
+                    except Exception as e:
+                        dec-=1
+                        time.sleep(5-dec)
 
-                    #df_last
-                    #print(df_all)
-                    break
-
-                except Exception as e:
-                    dec-=1
-                    time.sleep(5-dec)
-
-            if(dec==0):
-                fsefe=1
+                if(dec==0):
+                    fsefe=1
 
         df_all=pd.concat([df_all,df_test])
         df_all[["trade_date"]]=df_all[["trade_date"]].astype(int)
@@ -540,7 +620,7 @@ class Dataget(object):
         pro = ts.pro_api(token)
         #生成需要的数据集
         nowTime=datetime.datetime.now()
-        delta = datetime.timedelta(days=63)
+        delta = datetime.timedelta(days=83)
         delta_one = datetime.timedelta(days=1)
         nowTime=nowTime-delta_one
         month_ago = nowTime - delta
@@ -555,9 +635,12 @@ class Dataget(object):
         #刷新复权因子
         self.updatedaily_adj_factor(month_fst,month_sec)
 
-        savename='./temp_real/'+'dataset_'+month_fst+'_'+month_sec+'.csv'
+        #刷新资金流入数据
+        self.update_moneyflow(month_fst,month_sec)
 
+        savename='./temp_real/'+'dataset_'+month_fst+'_'+month_sec+'.csv'
         savename_adj='./temp_real/'+'dataset_adj_'+month_fst+'_'+month_sec+'.csv'
+        savename_moneyflow='./temp_real/'+'moneyflow_'+month_fst+'_'+month_sec+'.csv'
 
         if(os.path.exists(savename)==False):    
 
@@ -567,6 +650,11 @@ class Dataget(object):
             df_get=df_get[df_get['trade_date']<=int(month_sec)]
             df_get=df_get.reset_index(drop=True)
 
+            df_get['ts_code']=df_get['ts_code'].map(lambda x : x[:-3])
+            df_get.drop(['vol','change'],axis=1,inplace=True)
+        
+            df_get.to_csv(savename)
+
             df_get2=pd.read_csv('./Database/Daily_adj_factor.csv',index_col=0,header=0)
             
             df_get2=df_get2[df_get2['trade_date']>int(month_fst)]
@@ -574,13 +662,154 @@ class Dataget(object):
             df_get2=df_get2.reset_index(drop=True)
             df_get2.to_csv(savename_adj)
 
+            df_get3=pd.read_csv('./Database/Daily_moneyflow.csv',index_col=0,header=0)
+            
+            df_get3=df_get3[df_get3['trade_date']>int(month_fst)]
+            df_get3=df_get3[df_get3['trade_date']<=int(month_sec)]
+            df_get3=df_get3.reset_index(drop=True)
+            df_get3.to_csv(savename_moneyflow)
+
+
+        return savename,savename_adj,savename_moneyflow
+
+    def get_history_dateset_two(self):
+
+        #检查目录是否存在
+        FileIO.FileIO.mkdir('./temp_real')
+
+        #读取token
+        f = open('token.txt')
+        token = f.read()     #将txt文件的所有内容读入到字符串str中
+        f.close()
+        pro = ts.pro_api(token)
+        #生成需要的数据集
+        nowTime=datetime.datetime.now()
+        delta = datetime.timedelta(days=83)
+        delta_one = datetime.timedelta(days=1)
+        nowTime=nowTime-delta_one
+        month_ago = nowTime - delta
+        month_ago_next=month_ago+delta_one
+        month_fst=month_ago_next.strftime('%Y%m%d')  
+        month_sec=nowTime.strftime('%Y%m%d')  
+        month_thd=month_ago.strftime('%Y%m%d')      
+
+        #刷新数据库
+        self.updatedaily(month_fst,month_sec)
+
+        #刷新复权因子
+        self.updatedaily_adj_factor(month_fst,month_sec)
+
+        #刷新资金流入数据
+        #self.update_moneyflow(month_fst,month_sec)
+
+        savename='./temp_real/'+'dataset_'+month_fst+'_'+month_sec+'.csv'
+        savename_adj='./temp_real/'+'dataset_adj_'+month_fst+'_'+month_sec+'.csv'
+        #savename_moneyflow='./temp_real/'+'moneyflow_'+month_fst+'_'+month_sec+'.csv'
+
+        if(os.path.exists(savename)==False):    
+
+            df_get=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)
+            
+            df_get=df_get[df_get['trade_date']>int(month_fst)]
+            df_get=df_get[df_get['trade_date']<=int(month_sec)]
+            df_get=df_get.reset_index(drop=True)
+
             df_get['ts_code']=df_get['ts_code'].map(lambda x : x[:-3])
             df_get.drop(['vol','change'],axis=1,inplace=True)
-
-            
+        
             df_get.to_csv(savename)
 
+            df_get2=pd.read_csv('./Database/Daily_adj_factor.csv',index_col=0,header=0)
+            
+            df_get2=df_get2[df_get2['trade_date']>int(month_fst)]
+            df_get2=df_get2[df_get2['trade_date']<=int(month_sec)]
+            df_get2=df_get2.reset_index(drop=True)
+            df_get2.to_csv(savename_adj)
+
+            #df_get3=pd.read_csv('./Database/Daily_moneyflow.csv',index_col=0,header=0)
+            
+            #df_get3=df_get3[df_get3['trade_date']>int(month_fst)]
+            #df_get3=df_get3[df_get3['trade_date']<=int(month_sec)]
+            #df_get3=df_get3.reset_index(drop=True)
+            #df_get3.to_csv(savename_moneyflow)
+
+
         return savename,savename_adj
+
+    def get_history_dateset_three(self):
+
+        #检查目录是否存在
+        FileIO.FileIO.mkdir('./temp_real')
+
+        #读取token
+        f = open('token.txt')
+        token = f.read()     #将txt文件的所有内容读入到字符串str中
+        f.close()
+        pro = ts.pro_api(token)
+        #生成需要的数据集
+        nowTime=datetime.datetime.now()
+        delta = datetime.timedelta(days=83)
+        delta_one = datetime.timedelta(days=1)
+        nowTime=nowTime-delta_one
+        month_ago = nowTime - delta
+        month_ago_next=month_ago+delta_one
+        month_fst=month_ago_next.strftime('%Y%m%d')  
+        month_sec=nowTime.strftime('%Y%m%d')  
+        month_thd=month_ago.strftime('%Y%m%d')      
+
+        #刷新数据库
+        self.updatedaily(month_fst,month_sec)
+
+        #刷新复权因子
+        self.updatedaily_adj_factor(month_fst,month_sec)
+
+        #刷新长线指标？
+        self.updatedaily_long_factors(month_fst,month_sec)
+
+        #刷新资金流入数据
+        #self.update_moneyflow(month_fst,month_sec)
+
+        savename='./temp_real/'+'dataset_'+month_fst+'_'+month_sec+'.csv'
+        savename_adj='./temp_real/'+'dataset_adj_'+month_fst+'_'+month_sec+'.csv'
+        savename_long='./temp_real/'+'dataset_long_'+month_fst+'_'+month_sec+'.csv'
+        #savename_moneyflow='./temp_real/'+'moneyflow_'+month_fst+'_'+month_sec+'.csv'
+
+        if(os.path.exists(savename)==False):    
+
+            df_get=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)
+            
+            df_get=df_get[df_get['trade_date']>int(month_fst)]
+            df_get=df_get[df_get['trade_date']<=int(month_sec)]
+            df_get=df_get.reset_index(drop=True)
+
+            df_get['ts_code']=df_get['ts_code'].map(lambda x : x[:-3])
+            df_get.drop(['vol','change'],axis=1,inplace=True)
+        
+            df_get.to_csv(savename)
+
+            df_get2=pd.read_csv('./Database/Daily_adj_factor.csv',index_col=0,header=0)
+            
+            df_get2=df_get2[df_get2['trade_date']>int(month_fst)]
+            df_get2=df_get2[df_get2['trade_date']<=int(month_sec)]
+            df_get2=df_get2.reset_index(drop=True)
+            df_get2.to_csv(savename_adj)
+
+            df_get3=pd.read_csv('./Database/Daily_long_factor.csv',index_col=0,header=0)
+            
+            df_get3=df_get3[df_get3['trade_date']>int(month_fst)]
+            df_get3=df_get3[df_get3['trade_date']<=int(month_sec)]
+            df_get3=df_get3.reset_index(drop=True)
+            df_get3.to_csv(savename_long)
+
+            #df_get3=pd.read_csv('./Database/Daily_moneyflow.csv',index_col=0,header=0)
+            
+            #df_get3=df_get3[df_get3['trade_date']>int(month_fst)]
+            #df_get3=df_get3[df_get3['trade_date']<=int(month_sec)]
+            #df_get3=df_get3.reset_index(drop=True)
+            #df_get3.to_csv(savename_moneyflow)
+
+
+        return savename,savename_adj,savename_long
 
     def real_get_change(self,path_his):
 
@@ -672,3 +901,76 @@ class Dataget(object):
 
         dsfesf=1
 
+    def real_get_long_change(self,path_long):
+
+        df_history=pd.read_csv(path_long,index_col=0,header=0)
+
+        df_history['ts_code']=df_history['ts_code'].map(lambda x : x[:-3])
+        df_history.to_csv("real_long_now.csv")
+
+        dsfesf=1
+
+    def real_get_moneyflow_change(self,path_moneyflow):
+
+        df_history=pd.read_csv(path_moneyflow,index_col=0,header=0)
+
+        df_history['ts_code']=df_history['ts_code'].map(lambda x : x[:-3])
+        df_history.to_csv("real_moneyflow_now.csv")
+
+        dsfesf=1
+
+    def get_rzrq(self):
+        #获取两融信息
+
+        #读取token
+        f = open('token.txt')
+        token = f.read()     #将txt文件的所有内容读入到字符串str中
+        f.close()
+
+        pro = ts.pro_api(token)
+
+        date=pro.query('trade_cal', start_date='20130105', end_date='20200105')
+        date=date[date["is_open"]==1]
+        bufferlist=date["cal_date"]
+        get_list=bufferlist.values
+
+        df_all=pro.margin(trade_date='20130104')
+        for day in get_list:      
+            try:
+                df = pro.margin(trade_date=day)
+                df_all=pd.concat([df_all,df])
+                time.sleep(1)
+                print(day)
+
+            except Exception as e:
+                df_all.to_csv('./Daily2rong.csv')
+
+        df_all.to_csv('./Daily2rong.csv')
+
+    def get_xsjj(self):
+        #获取限售解禁
+
+        #读取token
+        f = open('token.txt')
+        token = f.read()     #将txt文件的所有内容读入到字符串str中
+        f.close()
+
+        pro = ts.pro_api(token)
+
+        date=pro.query('trade_cal', start_date='20130105', end_date='20200105')
+        date=date[date["is_open"]==1]
+        bufferlist=date["cal_date"]
+        get_list=bufferlist.values
+
+        df_all=pro.share_float(ann_date='20130104')
+        for day in get_list:      
+            try:
+                df = pro.share_float(ann_date=day)
+                df_all=pd.concat([df_all,df])
+                time.sleep(1)
+                print(day)
+
+            except Exception as e:
+                df_all.to_csv('./float2jiejing.csv')
+
+        df_all.to_csv('./float2jiejing.csv',encoding = 'gbk')
