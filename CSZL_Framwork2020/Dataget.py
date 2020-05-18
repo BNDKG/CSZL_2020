@@ -336,7 +336,7 @@ class Dataget(object):
             first_date=get_list[0]
             next_date=get_list[1:]
 
-            df_all=pro.daily(trade_date=first_date)
+            df_all=pro.daily_basic(ts_code='', trade_date=first_date, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,total_mv')
 
             zcounter=0
             zall=get_list.shape[0]

@@ -119,9 +119,9 @@ class Predict(object):
             if(self.CSZL_TimeCheck()):       
 
                 if(cur_inputflag==1):
-                    self.TodayPredict5Day()
+                    self.TodayPredict5Day_0517()
                 else:
-                    self.TodayPredict5Day()
+                    self.TodayPredict5Day_0517()
 
                 time.sleep(10000) 
         
@@ -142,7 +142,7 @@ class Predict(object):
 
         #return True
 
-        if (caltemp>=1453 and caltemp<=1500):
+        if (caltemp>=1454 and caltemp<=1500):
             return True
         else:
             return False 

@@ -73,21 +73,21 @@ if __name__ == '__main__':
     ###获取单个股票数据
     ##df = pro.stk_limit(ts_code='000018.SZ', start_date='20191115', end_date='20191230')
     ##print(df)
-    #zzz=Predict.Predict()
-    ###zzz.PredictBackRound()
-    #zzz.TodayPredict5Day_0517()
+    zzz=Predict.Predict()
+    #zzz.PredictBackRound()
+    zzz.TodayPredict5Day_0517()
 
     #dis=Display.Display()
     #dis.plotall_test()
 
 
-    bt=BT.BackTesting()
+    #bt=BT.BackTesting()
 
-    bt.backTesting()
+    #bt.backTesting()
 
 
     #bt.backtesting_forpara()
 
-    bt.backTestingWithPredictDatas()
+    #bt.backTestingWithPredictDatas()
 
-    bt.backTesting()
+    #bt.backTesting()

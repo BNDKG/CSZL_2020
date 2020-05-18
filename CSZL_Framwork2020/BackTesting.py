@@ -13,20 +13,20 @@ class BackTesting(object):
 
         SuperGet=Dataget.Dataget()
 
-        ###刷新资金量
-        SuperGet.update_moneyflow('20130101','20200516')
+        ####刷新资金量
+        #SuperGet.update_moneyflow('20130101','20200516')
 
-        #刷新数据库
-        SuperGet.updatedaily('20130101','20200516')
+        ##刷新数据库
+        #SuperGet.updatedaily('20130101','20200516')
 
-        #刷新复权因子
-        SuperGet.updatedaily_adj_factor('20130101','20200516')
+        ##刷新复权因子
+        #SuperGet.updatedaily_adj_factor('20130101','20200516')
 
         #刷新经济指标
-        #dataset_adj_train=SuperGet.updatedaily_long_factors('20130101','20200516')
+        dataset_adj_train=SuperGet.updatedaily_long_factors('20200101','20200516')
 
         ##刷新个股波动范围
-        SuperGet.update_stk_limit('20130101','20200516')
+        #SuperGet.update_stk_limit('20130101','20200516')
 
         dayA='20130701'
         dayB='20180101'
