@@ -71,7 +71,7 @@ class Predict(object):
 
         #选择特征工程
         #切换为e
-        cur_fe=FE.FEg30eo()    
+        cur_fe=FE.FEg30eom()    
         cur_fe.real_FE()
 
         #

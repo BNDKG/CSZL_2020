@@ -27,6 +27,8 @@ import random
 # 2/3 -20607
 # 4/16 -7621
 # 5/1 -795
+# 6/7 +9290
+# 6/20 +9585
 
 #两个主要功能 实时预测 和 回测
 #其他功能 基金选择 参数寻找
@@ -79,7 +81,10 @@ if __name__ == '__main__':
 
     #dis=Display.Display()
     #dis.plotall_test()
-
+    #REAL_Get=Dataget.Dataget()
+    #REAL_Get.testoffound()
+    #REAL_Get.testoffound2()
+    #REAL_Get.testoffound3()
 
     #bt=BT.BackTesting()
 

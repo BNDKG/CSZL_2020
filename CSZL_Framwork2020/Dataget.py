@@ -311,7 +311,7 @@ class Dataget(object):
         except Exception as e:
             #没有的情况下list为空
             date_list_old=[]
-            df_test=pd.DataFrame(columns=('ts_code','trade_date','turnover_rate','volume_ratio','pe','pb','total_mv'))
+            df_test=pd.DataFrame(columns=('ts_code','trade_date','turnover_rate','volume_ratio','pe','pb','ps_ttm','dv_ttm','circ_mv','total_mv'))
 
 
         #读取token
@@ -329,14 +329,14 @@ class Dataget(object):
         if len(get_list)<2:
             if len(get_list)==1:
                 first_date=get_list[0]
-                df_all=pro.daily_basic(ts_code='', trade_date=first_date, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,total_mv')
+                df_all=pro.daily_basic(ts_code='', trade_date=first_date, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,ps_ttm,dv_ttm,circ_mv,total_mv')
             else:
                 return
         else:
             first_date=get_list[0]
             next_date=get_list[1:]
 
-            df_all=pro.daily_basic(ts_code='', trade_date=first_date, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,total_mv')
+            df_all=pro.daily_basic(ts_code='', trade_date=first_date, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,ps_ttm,dv_ttm,circ_mv,total_mv')
 
             zcounter=0
             zall=get_list.shape[0]
@@ -348,7 +348,7 @@ class Dataget(object):
                 while(dec>0):
                     try:
                         time.sleep(1)
-                        df = pro.daily_basic(ts_code='', trade_date=singledate, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,total_mv')
+                        df = pro.daily_basic(ts_code='', trade_date=singledate, fields='ts_code,trade_date,turnover_rate,volume_ratio,pe,pb,ps_ttm,dv_ttm,circ_mv,total_mv')
                         
                         df_all=pd.concat([df_all,df])
 
@@ -817,7 +817,7 @@ class Dataget(object):
 
         #df_history['trade_date'] = df_history['trade_date'].astype(str)
 
-        #df_history=df_history[df_history['trade_date']!='20191206']
+        #df_history=df_history[df_history['trade_date']!=20200619]
 
 
         codelistbuffer=df_history['ts_code']
@@ -974,3 +974,149 @@ class Dataget(object):
                 df_all.to_csv('./float2jiejing.csv')
 
         df_all.to_csv('./float2jiejing.csv',encoding = 'gbk')
+
+    def testoffound(self):
+        #读取token
+        f = open('token.txt')
+        token = f.read()     #将txt文件的所有内容读入到字符串str中
+        f.close()
+        pro = ts.pro_api(token)
+
+        #df = pro.fund_nav(end_date='20170101')
+        #df = pro.fund_basic(market='O')
+        #df.to_csv('foundtest3.csv', encoding='utf_8_sig')
+
+
+        #读取历史数据防止重复
+
+        #读取历史数据防止重复
+        try:
+            df_test2=pd.read_csv('./Database/Found.csv',index_col=0,header=0)
+            df_test2[["end_date"]]=df_test2[["end_date"]].astype(int)
+            date_list_old=df_test2['end_date'].unique().astype(str)
+            print(date_list_old)
+
+            xxx=1
+        except Exception as e:
+            #没有的情况下list为空
+            date_list_old=[]
+            #df_test=pd.DataFrame(columns=('trade_date','ts_code','up_limit','down_limit'))
+
+
+        xxx=1
+
+
+        date=pro.query('trade_cal', start_date="20130101", end_date="20200601")
+
+
+        date=date[date["is_open"]==1]
+        bufferlist=date["cal_date"]
+        print(bufferlist)
+        get_list=bufferlist[~bufferlist.isin(date_list_old)].values
+
+        if len(get_list)<2:
+            if len(get_list)==1:
+                first_date=get_list[0]
+                df_all=pro.fund_nav(end_date=first_date)
+            else:
+                return
+        else:
+
+            first_date=get_list[0]
+            next_date=get_list[1:]
+
+            df_all=pro.fund_nav(end_date=first_date)
+
+            zcounter=0
+            zall=get_list.shape[0]
+            for singledate in next_date:
+                zcounter+=1
+                print(zcounter*100/zall)
+
+                dec=5
+                while(dec>0):
+                    try:
+                        time.sleep(1)
+                        df = pro.fund_nav(end_date=singledate)
+                        df[["end_date"]]=df[["end_date"]].astype(int)
+                        df_all=pd.concat([df_all,df])
+
+                        #df_last
+                        #print(df_all)
+                        break
+
+                    except Exception as e:
+                        dec-=1
+                        time.sleep(5-dec)
+
+                if(dec==0):
+                    fsefe=1
+
+            df_all=pd.concat([df_all,df_test2])
+            #df_all.to_csv('./Database/Foundtest.csv')
+            #print(df_all)
+            df_all[["end_date"]]=df_all[["end_date"]].astype(int)
+            df_all.sort_values("end_date",inplace=True)
+
+            df_all=df_all.reset_index(drop=True)
+
+            df_all.to_csv('./Database/Found.csv')
+        asdfasf=1
+
+    def testoffound2(self):
+
+        df_all=pd.read_csv("./Database/Found.csv",index_col=0,header=0)
+        df_all['tomorrow_adj_nav']=df_all.groupby('ts_code')['adj_nav'].shift(-1)
+        df_all=df_all[df_all['adj_nav']!=0]
+        df_all['pct_chg']=(df_all['tomorrow_adj_nav']-df_all['adj_nav'])/df_all['adj_nav']
+        #df_all['groptest']=df_all.groupby('ts_code')['pct_chg'].max()
+        df_all.to_csv('./Database/Found2.csv')
+
+        sdfasfsad=1
+
+    def testoffound3(self):
+
+        df_all=pd.read_csv("./Database/Found2.csv",index_col=0,header=0)
+    
+
+        test2=df_all.groupby('ts_code')['pct_chg'].sum()
+        test2=pd.DataFrame({'rank_sum':test2})
+        #test2=test2[test2['rank_sum']>0]
+        print(test2)
+
+        df_all['goal_rank']=df_all.groupby('ann_date')['pct_chg'].rank(pct=True)
+
+        #150230.SZ 003889.OF 159928.SZ
+        test=df_all[df_all['ts_code']=="159919.SZ"]
+        test=test[['ann_date','goal_rank']]
+        #test=test[['ann_date','goal_rank','pct_chg']]
+        df_all.rename(columns={'goal_rank':'my_rank'},inplace=True)
+
+        df_all=pd.merge(df_all, test, how='left', on=['ann_date'])
+
+        df_all['differ_rank']=df_all['my_rank']-df_all['goal_rank']
+        df_all['differ_rank']=df_all['differ_rank'].abs()
+
+        test3=df_all.groupby('ts_code')['differ_rank'].sum()
+        #test3=pd.DataFrame({'differ_rank_sum':test3})
+        test5=df_all.groupby('ts_code')['differ_rank'].count()
+        test5=pd.DataFrame({'differ_rank_count':test5,'differ_rank_sum':test3})
+
+        test3=pd.merge(test2, test5, how='left', on=['ts_code'])
+
+        test3['percent_rank']=test3['rank_sum']/(test3['differ_rank_count']+1)*100
+        test3['differ_rank_sum']=test3['differ_rank_sum']/(test3['differ_rank_count']+1)*100
+
+        #bad = pd.DataFrame({'bad':bad})
+        #regroup =  total.merge(bad,left_index=True,right_index=True, how='left')
+
+        test4=pd.read_csv("./Database/foundforname.csv",index_col=0,header=0)
+        test3=pd.merge(test3, test4, how='left', on=['ts_code'])
+
+        test3.to_csv('./Database/test3.csv',encoding="utf_8_sig")
+        test2.to_csv('./Database/test2.csv')
+
+        #test.to_csv('./Database/test.csv')
+        #print(test)
+        df_all.to_csv('./Database/Found3.csv')
+        sdfasfsad=1

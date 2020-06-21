@@ -14,24 +14,24 @@ class BackTesting(object):
         SuperGet=Dataget.Dataget()
 
         ####刷新资金量
-        #SuperGet.update_moneyflow('20130101','20200516')
+        #SuperGet.update_moneyflow('20130101','20200620')
 
         ##刷新数据库
-        #SuperGet.updatedaily('20130101','20200516')
+        #SuperGet.updatedaily('20130101','20200620')
 
         ##刷新复权因子
-        #SuperGet.updatedaily_adj_factor('20130101','20200516')
+        #SuperGet.updatedaily_adj_factor('20130101','20200620')
 
-        #刷新经济指标
-        dataset_adj_train=SuperGet.updatedaily_long_factors('20200101','20200516')
+        ##刷新经济指标
+        #SuperGet.updatedaily_long_factors('20130101','20200620')
 
         ##刷新个股波动范围
-        #SuperGet.update_stk_limit('20130101','20200516')
+        #SuperGet.update_stk_limit('20130101','20200620')
 
-        dayA='20130701'
-        dayB='20180101'
-        dayC='20180101'
-        dayD='20200516'
+        dayA='20170620'
+        dayB='20190601'
+        dayC='20190420'
+        dayD='20200620'
 
         ##选择日期
         dataset_adj_train=SuperGet.getDataSet_adj_factor(dayA,dayB)
@@ -55,7 +55,7 @@ class BackTesting(object):
 
         #选择特征工程
 
-        cur_fe=FE.FEg30eo()
+        cur_fe=FE.FEg30eom()
         #cur_fe=FE.FEg30ed()
         #cur_fe=FE.FE_2_b()
         #cur_fe=FE.FEg30r()

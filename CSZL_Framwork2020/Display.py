@@ -65,6 +65,7 @@ class Display(object):
 
         #lgb_train_2('2017')
 
+        #days,show3=self.show_all_rate_ens_plusbak(path)
         days,show3=self.show_all_rate_ens_plus_plus(path)
         #days,show3=self.show_all_rate_ens_plus(path)
         print(show3)
@@ -774,7 +775,7 @@ class Display(object):
             #average=buffer2.tail(1)['tomorrow_chg'].mean()
 
             #b=cur_show[cur_show['mix']>0.40]
-            average=cc.head(30)['pct_chg2'].mean()
+            average=cc.head(3)['pct_chg2'].mean()
             #average=cc.head(20)['pct_chg2'].values[12]
 
             today2=cur_show['pct_chg'].mean()
@@ -964,7 +965,7 @@ class Display(object):
         dayrange=5
 
         all_csv_path=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)       
-        all_csv_path=all_csv_path.loc[:,['ts_code','trade_date','pct_chg','pre_close']]
+        all_csv_path=all_csv_path.loc[:,['ts_code','trade_date','pct_chg','pre_close','amount']]
         all_csv_path['pct_chg']=all_csv_path['pct_chg'].astype('float64')
 
         #all_csv_path['pct_chg']=all_csv_path.groupby('ts_code')['pct_chg'].shift(-1)
@@ -1007,11 +1008,15 @@ class Display(object):
         showsource.loc[showsource['pct_chg']>9.4,'high_stop']=1
         showsource.loc[(showsource['pct_chg']<5.2) & (4.8<showsource['pct_chg']),'high_stop']=1
         showsource.loc[showsource['pre_close']<1.5,'high_stop']=1        
-        showsource=showsource[showsource['high_stop']==0]
+        #showsource=showsource[showsource['high_stop']==0]
+
+        #showsource=showsource[showsource['amount']>10000]
 
         showsource['mix_rank']=showsource.groupby('trade_date')['mix'].rank(ascending=False,pct=False,method='first')
         print(showsource)
         showsource['next_chg']=showsource.groupby('ts_code')['tomorrow_chg'].shift(-1)
+        showsource['mix_rank_real']=showsource.groupby('trade_date')['tomorrow_chg'].rank(ascending=False,pct=False,method='first')
+
 
         #showsource=showsource[showsource['ts_code'].str.startswith('300')==False]
 
@@ -1026,6 +1031,9 @@ class Display(object):
         for curdata in databuffer:
             #curday=databuffer[index]
             cur_show=showsource[showsource["trade_date"]==curdata]
+            cur_show=cur_show[cur_show['high_stop']==0]
+            #cur_show=cur_show[cur_show['amount']>10000]
+
             cc=cur_show.sort_values(by="mix" , ascending=False)
 
             bufferL=[]
@@ -1059,7 +1067,7 @@ class Display(object):
         days2,show=self.standard_show_Kelly_Criterion_new(changer,first_base_income=100000,day_interval=dayrange)
         
         #showsource=showsource[showsource['trade_date']>20190101]
-        showsource=showsource[showsource['mix_rank']<10]
+        showsource=showsource[showsource['mix_rank']<20]
         showsource.to_csv('seefef.csv')
         return days2,show
 
