@@ -21,14 +21,6 @@ import datetime
 import time
 import random
 
-# 2020年 目标20w
-# 1/12 +3891
-# 1/26 -5913
-# 2/3 -20607
-# 4/16 -7621
-# 5/1 -795
-# 6/7 +9290
-# 6/20 +9585
 
 #两个主要功能 实时预测 和 回测
 #其他功能 基金选择 参数寻找
@@ -42,6 +34,14 @@ if __name__ == '__main__':
     #f.close()
 
     #pro = ts.pro_api(token)
+
+    #df = pro.moneyflow(ts_code='', trade_date='20200909')
+
+    ##df_all=pro.concept(src='ts')
+    #df_all=pro.concept_detail(ts_code = '600848.SH')
+
+    #print(df_all)
+    #sdfsf=1
 
     #df = pro.index_daily(ts_code='000001.SH', start_date='20130105', end_date='20200105')
     #print(df)
@@ -72,12 +72,12 @@ if __name__ == '__main__':
     ##df = pro.stk_limit(trade_date='20120409')
 
 
-    ###获取单个股票数据
-    ##df = pro.stk_limit(ts_code='000018.SZ', start_date='20191115', end_date='20191230')
-    ##print(df)
-    zzz=Predict.Predict()
+    ##获取单个股票数据
+    #df = pro.stk_limit(ts_code='000018.SZ', start_date='20191115', end_date='20191230')
+    #print(df)
+    #zzz=Predict.Predict()
     #zzz.PredictBackRound()
-    zzz.TodayPredict5Day_0517()
+    #zzz.TodayPredict5Day_0517()
 
     #dis=Display.Display()
     #dis.plotall_test()
@@ -86,13 +86,16 @@ if __name__ == '__main__':
     #REAL_Get.testoffound2()
     #REAL_Get.testoffound3()
 
-    #bt=BT.BackTesting()
+    bt=BT.BackTesting()
 
-    #bt.backTesting()
-
+    ##bt.backTesting()
+    bt.TodayTesting()
 
     #bt.backtesting_forpara()
 
     #bt.backTestingWithPredictDatas()
-
+    
     #bt.backTesting()
+
+
+    end=1

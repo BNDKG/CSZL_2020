@@ -2,12 +2,13 @@
 
 import tushare as ts
 import pandas as pd
+import numpy as np
 import FileIO
 import time
 import os
 import datetime
 import random
-
+from sklearn import preprocessing
 
 
 class Dataget(object):
@@ -103,8 +104,8 @@ class Dataget(object):
             try:
                 df_get=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)
             
-                df_get=df_get[df_get['trade_date']>int(start_date)]
-                df_get=df_get[df_get['trade_date']<int(end_date)]
+                df_get=df_get[df_get['trade_date']>=int(start_date)]
+                df_get=df_get[df_get['trade_date']<=int(end_date)]
                 df_get=df_get.reset_index(drop=True)
                 df_get.to_csv(filename)
                 xxx=1
@@ -207,8 +208,8 @@ class Dataget(object):
             try:
                 df_get=pd.read_csv('./Database/Daily_adj_factor.csv',index_col=0,header=0)
             
-                df_get=df_get[df_get['trade_date']>int(start_date)]
-                df_get=df_get[df_get['trade_date']<int(end_date)]
+                df_get=df_get[df_get['trade_date']>=int(start_date)]
+                df_get=df_get[df_get['trade_date']<=int(end_date)]
                 df_get=df_get.reset_index(drop=True)
                 df_get.to_csv(filename)
                 xxx=1
@@ -384,8 +385,8 @@ class Dataget(object):
             try:
                 df_get=pd.read_csv('./Database/Daily_long_factor.csv',index_col=0,header=0)
             
-                df_get=df_get[df_get['trade_date']>int(start_date)]
-                df_get=df_get[df_get['trade_date']<int(end_date)]
+                df_get=df_get[df_get['trade_date']>=int(start_date)]
+                df_get=df_get[df_get['trade_date']<=int(end_date)]
                 df_get=df_get.reset_index(drop=True)
                 df_get.to_csv(filename)
                 xxx=1
@@ -492,8 +493,8 @@ class Dataget(object):
             try:
                 df_get=pd.read_csv('./Database/Daily_moneyflow.csv',index_col=0,header=0)
             
-                df_get=df_get[df_get['trade_date']>int(start_date)]
-                df_get=df_get[df_get['trade_date']<int(end_date)]
+                df_get=df_get[df_get['trade_date']>=int(start_date)]
+                df_get=df_get[df_get['trade_date']<=int(end_date)]
                 df_get=df_get.reset_index(drop=True)
                 df_get.to_csv(filename)
                 xxx=1
@@ -597,8 +598,8 @@ class Dataget(object):
             try:
                 df_get=pd.read_csv('./Database/Daily_stk_limit.csv',index_col=0,header=0)
             
-                df_get=df_get[df_get['trade_date']>int(start_date)]
-                df_get=df_get[df_get['trade_date']<int(end_date)]
+                df_get=df_get[df_get['trade_date']>=int(start_date)]
+                df_get=df_get[df_get['trade_date']<=int(end_date)]
                 df_get=df_get.reset_index(drop=True)
                 df_get.to_csv(filename)
                 xxx=1
@@ -607,6 +608,217 @@ class Dataget(object):
                 #没有的情况下list为空
                 print("错误，请先调用updatedaily_stk_limit或检查其他问题")
         return filename
+
+    def update_concept(self):
+
+        #增量更新
+
+        #输出路径为"./Database/Dailydata.csv"
+
+        #检查目录是否存在
+        FileIO.FileIO.mkdir('./Database')
+
+        #读取历史数据防止重复
+        try:
+            df_test=pd.read_csv('./Database/Daily_concept.csv',index_col=0,header=0)
+            #date_list_old=df_test['trade_date'].unique().astype(str)
+
+            xxx=1
+        except Exception as e:
+            #没有的情况下list为空
+            date_list_old=[]
+            df_test=pd.DataFrame(columns=('id','concept_name','ts_code','name'))
+
+
+        #读取token
+        f = open('token.txt')
+        token = f.read()     #将txt文件的所有内容读入到字符串str中
+        f.close()
+
+        pro = ts.pro_api(token)
+
+        #先拿到列表
+        df_list=pro.concept(src='ts')
+
+        print(df_list)
+        allcodes=df_list['code']
+        le = preprocessing.LabelEncoder()
+        le.fit(allcodes)
+        aas=le.transform(allcodes)
+        print(aas)
+
+        data = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,list_date,market')
+
+        get_list=data['ts_code'].values
+
+        if len(get_list)<2:
+            if len(get_list)==1:
+                first_code=get_list[0]                
+                df_all=pro.concept_detail(ts_code = first_code)
+            else:
+                return
+        else:
+
+            first_code=get_list[0]
+            next_date=get_list[1:]
+
+            df_all=pro.concept_detail(ts_code = first_code)
+            all=len(get_list)
+            zcounter2=0
+            for getcode in next_date:
+                try:
+                    time.sleep(0.1)
+                    curconcept=pro.concept_detail(ts_code = getcode)
+                    df_all=pd.concat([df_all,curconcept])
+                    print(zcounter2/(all+1))
+
+
+                    zcounter2+=1
+                    #if(zcounter2>10):
+                    #    break
+                    fadfsas=1
+
+                except Exception as e:
+                    time.sleep(5-dec)
+
+        #print(df_all)
+
+        df_all.to_csv('./Database/Daily_concept.csv',encoding="utf_8_sig")
+
+
+        dsdfsf=1
+
+    def getDataSet_concept(self):
+        #获取某日到某日的数据,并保存到temp中
+        filename='./temp/'+'Daily_concept.csv'
+
+        #检查目录是否存在
+        FileIO.FileIO.mkdir('./temp/')
+        #检查文件是否存在
+        if(os.path.exists(filename)==False):       
+            try:
+                df_get=pd.read_csv('./Database/Daily_concept.csv',index_col=0,header=0)
+            
+                #df_get=df_get[df_get['trade_date']>int(start_date)]
+                #df_get=df_get[df_get['trade_date']<int(end_date)]
+                #df_get=df_get.reset_index(drop=True)
+                df_get.to_csv(filename,encoding="utf_8_sig")
+                xxx=1
+                print('数据集生成完成')
+            except Exception as e:
+                #没有的情况下list为空
+                print("错误，请先调用updatedaily_stk_limit或检查其他问题")
+        return filename
+
+    def update_basic(self):
+        #获取基本数据
+
+        FileIO.FileIO.mkdir('./Database')
+
+        #读取token
+        f = open('token.txt')
+        token = f.read()     #将txt文件的所有内容读入到字符串str中
+        f.close()
+
+        pro = ts.pro_api(token)
+        data = pro.stock_basic(exchange='', list_status='L', fields='ts_code,symbol,name,area,list_date,market')
+        data2 = df = pro.concept(src='ts')
+
+        data.to_csv('./Database/Daily_basic.csv',encoding="utf_8_sig")
+        data2.to_csv('./Database/Daily_conceptlist.csv',encoding="utf_8_sig")
+
+    def getDataSet_conceptmixed(self):
+        #获取某日到某日的数据,并保存到temp中
+        filename='./temp/'+'Daily_conceptmixed.csv'
+
+        #检查目录是否存在
+        FileIO.FileIO.mkdir('./temp/')
+        #检查文件是否存在
+        if(os.path.exists(filename)==False):       
+            try:
+                #df_get=pd.read_csv('./Database/Daily_conceptlist.csv',index_col=0,header=0)
+
+                df_conceptlist=pd.read_csv('./Database/Daily_conceptlist.csv',index_col=0,header=0)
+                df_concept=pd.read_csv('./Database/Daily_concept.csv',index_col=0,header=0)
+
+                asda = df_conceptlist['code'].values
+                asda = np.insert(asda, 0, "ts_code")
+                default=np.zeros(len(asda),dtype=int).reshape(1,len(asda))
+                #default = np.insert(default, 0, "1")
+
+                listchanger_zero=pd.DataFrame(data=default,columns=asda)
+                listchanger_zero['ts_code']= listchanger_zero['ts_code'].astype(np.str)
+
+                #listchanger=listchanger.append(default, ignore_index=True)
+
+                print(listchanger_zero)
+                df_all2=pd.DataFrame(columns=asda)
+
+                last_name="000000.sz"
+                curconcept=listchanger_zero.copy()
+                counterz=0
+                for curdata in df_concept.iterrows():
+                    cur_name=curdata[1]['ts_code']
+                    if(last_name!=cur_name):
+                        #如果没有换名字就不新创建
+
+                        df_all2=pd.concat([df_all2,curconcept])
+                        curconcept=listchanger_zero.copy()
+               
+                        d_index = list(curconcept.columns).index('ts_code')
+                        curconcept.iloc[0,d_index] = cur_name
+
+                        #print(df_all2)
+
+                    cur_conceptid=curdata[1]['id']
+                    id_index = list(curconcept.columns).index(cur_conceptid)
+                    curconcept.iloc[0,id_index] = 1
+                    #print(curconcept)
+                    #curconcept[0]["ts_code"]=cur_name
+                    counterz+=1
+
+                    if(counterz%200==0):
+                        print(counterz/df_concept.shape[0])
+                    last_name=cur_name
+
+                print(df_all2)
+                df_all2.reset_index(drop=True, inplace=True)
+                df_all2=df_all2.drop(index=[0],axis=0)
+                #df_get=df_get[df_get['trade_date']>int(start_date)]
+                #df_get=df_get[df_get['trade_date']<int(end_date)]
+                #df_get=df_get.reset_index(drop=True)
+                df_all2.to_csv(filename)
+                xxx=1
+                print('数据集生成完成')
+            except Exception as e:
+                #没有的情况下list为空
+                print("错误，请先调用updatedaily_stk_limit或检查其他问题")
+        return filename
+
+    def getDataSet_basic(self):
+        #获取某日到某日的数据,并保存到temp中
+        filename='./temp/'+'Daily_basic.csv'
+        filename2='./temp/'+'Daily_conceptlist.csv'
+
+        #检查目录是否存在
+        FileIO.FileIO.mkdir('./temp/')
+        #检查文件是否存在
+        if(os.path.exists(filename)==False):       
+            try:
+                df_get=pd.read_csv('./Database/Daily_basic.csv',index_col=0,header=0)
+                df_get2=pd.read_csv('./Database/Daily_conceptlist.csv',index_col=0,header=0)
+            
+                #df_get=df_get[df_get['trade_date']>int(start_date)]
+                #df_get=df_get[df_get['trade_date']<int(end_date)]
+                #df_get=df_get.reset_index(drop=True)
+                df_get.to_csv(filename,encoding="utf_8_sig")
+                df_get2.to_csv(filename2,encoding="utf_8_sig")
+                xxx=1
+                print('数据集生成完成')
+            except Exception as e:
+                #没有的情况下list为空
+                print("错误，请先调用updatedaily_stk_limit或检查其他问题")
+        return filename,filename2
 
     def get_history_dateset(self):
 
@@ -636,11 +848,11 @@ class Dataget(object):
         self.updatedaily_adj_factor(month_fst,month_sec)
 
         #刷新资金流入数据
-        self.update_moneyflow(month_fst,month_sec)
+        #self.update_moneyflow(month_fst,month_sec)
 
         savename='./temp_real/'+'dataset_'+month_fst+'_'+month_sec+'.csv'
         savename_adj='./temp_real/'+'dataset_adj_'+month_fst+'_'+month_sec+'.csv'
-        savename_moneyflow='./temp_real/'+'moneyflow_'+month_fst+'_'+month_sec+'.csv'
+        #savename_moneyflow='./temp_real/'+'moneyflow_'+month_fst+'_'+month_sec+'.csv'
 
         if(os.path.exists(savename)==False):    
 
@@ -662,12 +874,12 @@ class Dataget(object):
             df_get2=df_get2.reset_index(drop=True)
             df_get2.to_csv(savename_adj)
 
-            df_get3=pd.read_csv('./Database/Daily_moneyflow.csv',index_col=0,header=0)
+            #df_get3=pd.read_csv('./Database/Daily_moneyflow.csv',index_col=0,header=0)
             
-            df_get3=df_get3[df_get3['trade_date']>int(month_fst)]
-            df_get3=df_get3[df_get3['trade_date']<=int(month_sec)]
-            df_get3=df_get3.reset_index(drop=True)
-            df_get3.to_csv(savename_moneyflow)
+            #df_get3=df_get3[df_get3['trade_date']>int(month_fst)]
+            #df_get3=df_get3[df_get3['trade_date']<=int(month_sec)]
+            #df_get3=df_get3.reset_index(drop=True)
+            #df_get3.to_csv(savename_moneyflow)
 
 
         return savename,savename_adj,savename_moneyflow
@@ -848,6 +1060,9 @@ class Dataget(object):
                 print(printcounter/len(codelist))
 
             printcounter+=1
+        if(len(bufferlist)):
+            df_real2=ts.get_realtime_quotes(bufferlist)
+            df_real=df_real.append(df_real2)
 
         #df_real=ts.get_realtime_quotes(['600839','000980','000981'])
         #df_real2=ts.get_realtime_quotes(['000010','600000','600010'])
@@ -1006,7 +1221,7 @@ class Dataget(object):
         xxx=1
 
 
-        date=pro.query('trade_cal', start_date="20130101", end_date="20200601")
+        date=pro.query('trade_cal', start_date="20130101", end_date="20210122")
 
 
         date=date[date["is_open"]==1]

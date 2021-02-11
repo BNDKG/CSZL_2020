@@ -13,25 +13,43 @@ class BackTesting(object):
 
         SuperGet=Dataget.Dataget()
 
+        updateday="20201211"
+
         ####刷新资金量
-        #SuperGet.update_moneyflow('20130101','20200620')
+        #SuperGet.update_moneyflow('20130101',updateday)
 
         ##刷新数据库
-        #SuperGet.updatedaily('20130101','20200620')
+        #SuperGet.updatedaily('20130101',updateday)
 
         ##刷新复权因子
-        #SuperGet.updatedaily_adj_factor('20130101','20200620')
+        #SuperGet.updatedaily_adj_factor('20130101',updateday)
 
         ##刷新经济指标
-        #SuperGet.updatedaily_long_factors('20130101','20200620')
+        #SuperGet.updatedaily_long_factors('20130101',updateday)
 
         ##刷新个股波动范围
-        #SuperGet.update_stk_limit('20130101','20200620')
+        #SuperGet.update_stk_limit('20130101',updateday)
 
-        dayA='20170620'
-        dayB='20190601'
-        dayC='20190420'
-        dayD='20200620'
+        #####刷新个股板块信息
+        ###SuperGet.update_concept()
+
+        ###SuperGet.update_basic()
+
+
+        #dayA='20130620'
+        #dayB='20160603'
+        #dayC='20160420'
+        #dayD='20200919'
+
+        dayA='20170220'
+        dayB='20190605'
+        dayC='20200701'
+        dayD='20201211'
+
+        #dayA='20160420'
+        #dayB='20200906'
+        #dayC='20130620'
+        #dayD='20160602'
 
         ##选择日期
         dataset_adj_train=SuperGet.getDataSet_adj_factor(dayA,dayB)
@@ -49,24 +67,178 @@ class BackTesting(object):
         dataset_stk_limit_train=SuperGet.getDataSet_stk_limit(dayA,dayB)
         dataset_stk_limit_test=SuperGet.getDataSet_stk_limit(dayC,dayD)
 
-        ##测试添加资金量指标
-        dataset_moneyflow_train=SuperGet.getDataSet_moneyflow(dayA,dayB)
-        dataset_moneyflow_test=SuperGet.getDataSet_moneyflow(dayC,dayD)
+        ###测试添加资金量指标
+        #dataset_moneyflow_train=SuperGet.getDataSet_moneyflow(dayA,dayB)
+        #dataset_moneyflow_test=SuperGet.getDataSet_moneyflow(dayC,dayD)
+        dataset_moneyflow_train=[]
+        dataset_moneyflow_test=[]
+
+        #加上基础板块指标等固定属性
+        dataset_basic,dataset_conceptlist=SuperGet.getDataSet_basic()
+
+        #加上板块固定属性
+        dataset_concept=SuperGet.getDataSet_concept()
+        #mix概念信息为类似onehot
+        dataset_conceptmixed=SuperGet.getDataSet_conceptmixed()
 
         #选择特征工程
-
+        
         cur_fe=FE.FEg30eom()
+        #cur_fe=FE.FEg30eom_start1213a()
+        
+        #cur_fe=FE.FEg30eom_test1()
+        #cur_fe=FE.FEg30eom_basic()
+        #cur_fe=FE.FEg30eom_reg()
+        #cur_fe=FE.FEg30eom_reg_concept3()       
+        #cur_fe=FE.FEg30eom_no300()
+        #cur_fe=FE.FEg30eom_300()
+        #cur_fe=FE.FE_apple_19()
+        #cur_fe=FE.FE_banana_9()
+        #cur_fe=FE.FE_cat_22()
+        #cur_fe=FE.FE3_test5()
         #cur_fe=FE.FEg30ed()
         #cur_fe=FE.FE_2_b()
         #cur_fe=FE.FEg30r()
 
-        FE_train=cur_fe.create(dataset_train,dataset_adj_train,dataset_stk_limit_train,dataset_moneyflow_train,dataset_long_train)
-        FE_test=cur_fe.create(dataset_test,dataset_adj_test,dataset_stk_limit_test,dataset_moneyflow_test,dataset_long_test)
+        FE_train=cur_fe.create(dataset_train,dataset_adj_train,dataset_stk_limit_train,\
+            dataset_moneyflow_train,dataset_long_train,dataset_basic,dataset_conceptlist,\
+            dataset_concept,dataset_conceptmixed)
+        FE_test=cur_fe.create(dataset_test,dataset_adj_test,dataset_stk_limit_test,\
+            dataset_moneyflow_test,dataset_long_test,dataset_basic,dataset_conceptlist,\
+            dataset_concept,dataset_conceptmixed)
         #FE_train=cur_fe.create(dataset_train,dataset_adj_train,dataset_moneyflow_train)
         #FE_test=cur_fe.create(dataset_test,dataset_adj_test,dataset_moneyflow_test)
 
         #选择模型
         cur_model=Models.LGBmodel()
+        #cur_model=Models.LGBmodel_reg()
+        #cur_model=models.LGBmodel_highstop()
+        #训练模型
+        cur_model_done=cur_model.train(FE_train)
+        #进行回测
+        finalpath=cur_model.predict(FE_test,cur_model_done)
+    
+        #展示类
+        dis=Display.Display()
+
+        #dis.scatter(finalpath)
+        dis.plotall(finalpath)
+
+
+        sdfsdf=1
+
+    def TodayTesting(self):
+
+        SuperGet=Dataget.Dataget()
+
+        updateday="20210209"
+
+        #####刷新资金量
+        #SuperGet.update_moneyflow('20130101',updateday)
+
+        ###刷新数据库
+        #SuperGet.updatedaily('20130101',updateday)
+
+        ###刷新复权因子
+        #SuperGet.updatedaily_adj_factor('20130101',updateday)
+
+        ###刷新经济指标
+        #SuperGet.updatedaily_long_factors('20130101',updateday)
+
+        ###刷新个股波动范围
+        #SuperGet.update_stk_limit('20130101',updateday)
+
+        ######刷新个股板块信息
+        ####SuperGet.update_concept()
+
+        ####SuperGet.update_basic()
+
+
+        #dayA='20130620'
+        #dayB='20160603'
+        #dayC='20160420'
+        #dayD='20200919'
+
+        #dayA='20170220'
+        dayA='20130219'
+        dayB='20170620'
+        dayC='20170605'
+        dayD='20210209'
+
+        #dayA='20170220'
+        #dayB='20200628'
+        #dayC='20130505'
+        #dayD='20161231'
+
+        #dayA='20130420'
+        #dayB='20200906'
+        #dayC='20130620'
+        #dayD='20160602'
+
+        ##选择日期
+        dataset_adj_train=SuperGet.getDataSet_adj_factor(dayA,dayB)
+        dataset_adj_test=SuperGet.getDataSet_adj_factor(dayC,dayD)
+
+        dataset_train=SuperGet.getDataSet(dayA,dayB)
+        dataset_test=SuperGet.getDataSet(dayC,dayD)
+
+        #测试添加长期指标
+
+        dataset_long_train=SuperGet.getDataSet_long_factor(dayA,dayB)
+        dataset_long_test=SuperGet.getDataSet_long_factor(dayC,dayD)
+
+        ##添加确定的stflag防止模型与实际情况的区别
+        dataset_stk_limit_train=SuperGet.getDataSet_stk_limit(dayA,dayB)
+        dataset_stk_limit_test=SuperGet.getDataSet_stk_limit(dayC,dayD)
+
+        ###测试添加资金量指标
+        #dataset_moneyflow_train=SuperGet.getDataSet_moneyflow(dayA,dayB)
+        #dataset_moneyflow_test=SuperGet.getDataSet_moneyflow(dayC,dayD)
+        dataset_moneyflow_train=[]
+        dataset_moneyflow_test=[]
+
+        #加上基础板块指标等固定属性
+        dataset_basic,dataset_conceptlist=SuperGet.getDataSet_basic()
+
+        #加上板块固定属性
+        dataset_concept=SuperGet.getDataSet_concept()
+        #mix概念信息为类似onehot
+        dataset_conceptmixed=SuperGet.getDataSet_conceptmixed()
+
+        #选择特征工程
+        
+        #cur_fe=FE.FEg30eom0110onlinee()
+        cur_fe=FE.FEg30eom0110onlinej()
+        
+        #cur_fe=FE.trend_following()
+        #cur_fe=FE.FEg30eom_start1213a()
+        
+        #cur_fe=FE.FEg30eom_test1()
+        #cur_fe=FE.FEg30eom_basic()
+        #cur_fe=FE.FEg30eom_reg()
+        #cur_fe=FE.FEg30eom_reg_concept3()       
+        #cur_fe=FE.FEg30eom_no300()
+        #cur_fe=FE.FEg30eom_300()
+        #cur_fe=FE.FE_apple_19()
+        #cur_fe=FE.FE_banana_9()
+        #cur_fe=FE.FE_cat_22()
+        #cur_fe=FE.FE3_test5()
+        #cur_fe=FE.FEg30ed()
+        #cur_fe=FE.FE_2_b()
+        #cur_fe=FE.FEg30r()
+
+        FE_train=cur_fe.create(dataset_train,dataset_adj_train,dataset_stk_limit_train,\
+            dataset_moneyflow_train,dataset_long_train,dataset_basic,dataset_conceptlist,\
+            dataset_concept,dataset_conceptmixed)
+        FE_test=cur_fe.create(dataset_test,dataset_adj_test,dataset_stk_limit_test,\
+            dataset_moneyflow_test,dataset_long_test,dataset_basic,dataset_conceptlist,\
+            dataset_concept,dataset_conceptmixed)
+        #FE_train=cur_fe.create(dataset_train,dataset_adj_train,dataset_moneyflow_train)
+        #FE_test=cur_fe.create(dataset_test,dataset_adj_test,dataset_moneyflow_test)
+
+        #选择模型
+        cur_model=Models.LGBmodel()
+        #cur_model=Models.LGBmodel_reg()
         #cur_model=models.LGBmodel_highstop()
         #训练模型
         cur_model_done=cur_model.train(FE_train)

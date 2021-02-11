@@ -351,3 +351,5 @@ MigrationBackup/
 *.csv
 *.pkl
 *.txt
+/CSZL_Framwork2020/build/CSZL_Framwork2020
+*.exe
