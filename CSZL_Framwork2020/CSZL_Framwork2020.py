@@ -21,6 +21,11 @@ import datetime
 import time
 import random
 
+#from tensorflow.python.client import device_lib
+#import tensorflow as tf
+
+#print(device_lib.list_local_devices())
+#print(tf.test.is_built_with_cuda())
 
 #两个主要功能 实时预测 和 回测
 #其他功能 基金选择 参数寻找
@@ -35,12 +40,12 @@ if __name__ == '__main__':
 
     #pro = ts.pro_api(token)
 
-    #df = pro.moneyflow(ts_code='', trade_date='20200909')
+    #df = pro.moneyflow(trade_date='20210701')
 
-    ##df_all=pro.concept(src='ts')
-    #df_all=pro.concept_detail(ts_code = '600848.SH')
-
-    #print(df_all)
+    ###df_all=pro.concept(src='ts')
+    ##df_all=pro.concept_detail(ts_code = '600848.SH')
+    #df.to_csv('timetofight.csv',encoding = 'gbk')
+    #print(df)
     #sdfsf=1
 
     #df = pro.index_daily(ts_code='000001.SH', start_date='20130105', end_date='20200105')
@@ -77,7 +82,7 @@ if __name__ == '__main__':
     #print(df)
     #zzz=Predict.Predict()
     #zzz.PredictBackRound()
-    #zzz.TodayPredict5Day_0517()
+    #zzz.TodayPredict5Day_0606()
 
     #dis=Display.Display()
     #dis.plotall_test()

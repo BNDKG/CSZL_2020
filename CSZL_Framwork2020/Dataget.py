@@ -88,7 +88,7 @@ class Dataget(object):
 
         df_all=df_all.reset_index(drop=True)
         #688del
-        df_all=df_all[df_all['ts_code'].str.startswith('688')==False]
+        #df_all=df_all[df_all['ts_code'].str.startswith('688')==False]
         df_all.to_csv('./Database/Dailydata.csv')
 
         dsdfsf=1
@@ -1023,6 +1023,81 @@ class Dataget(object):
 
         return savename,savename_adj,savename_long
 
+    def get_history_dateset_four(self):
+
+        #检查目录是否存在
+        FileIO.FileIO.mkdir('./temp_real')
+
+        #读取token
+        f = open('token.txt')
+        token = f.read()     #将txt文件的所有内容读入到字符串str中
+        f.close()
+        pro = ts.pro_api(token)
+        #生成需要的数据集
+        nowTime=datetime.datetime.now()
+        delta = datetime.timedelta(days=63)
+        delta_one = datetime.timedelta(days=1)
+        nowTime=nowTime-delta_one
+        month_ago = nowTime - delta
+        month_ago_next=month_ago+delta_one
+        month_fst=month_ago_next.strftime('%Y%m%d')  
+        month_sec=nowTime.strftime('%Y%m%d')  
+        month_thd=month_ago.strftime('%Y%m%d')      
+
+        #刷新数据库
+        self.updatedaily(month_fst,month_sec)
+
+        #刷新复权因子
+        self.updatedaily_adj_factor(month_fst,month_sec)
+
+        #刷新长线指标？
+        self.updatedaily_long_factors(month_fst,month_sec)
+
+        #刷新资金流入数据
+        self.update_moneyflow(month_fst,month_sec)
+
+        savename='./temp_real/'+'dataset_'+month_fst+'_'+month_sec+'.csv'
+        savename_adj='./temp_real/'+'dataset_adj_'+month_fst+'_'+month_sec+'.csv'
+        savename_long='./temp_real/'+'dataset_long_'+month_fst+'_'+month_sec+'.csv'
+        savename_moneyflow='./temp_real/'+'moneyflow_'+month_fst+'_'+month_sec+'.csv'
+
+        if(os.path.exists(savename)==False):    
+
+            df_get=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)
+            
+            df_get=df_get[df_get['trade_date']>int(month_fst)]
+            df_get=df_get[df_get['trade_date']<=int(month_sec)]
+            df_get=df_get.reset_index(drop=True)
+
+            df_get['ts_code']=df_get['ts_code'].map(lambda x : x[:-3])
+            df_get.drop(['vol','change'],axis=1,inplace=True)
+        
+            df_get.to_csv(savename)
+
+            df_get2=pd.read_csv('./Database/Daily_adj_factor.csv',index_col=0,header=0)
+            
+            df_get2=df_get2[df_get2['trade_date']>int(month_fst)]
+            df_get2=df_get2[df_get2['trade_date']<=int(month_sec)]
+            df_get2=df_get2.reset_index(drop=True)
+            df_get2.to_csv(savename_adj)
+
+            df_get3=pd.read_csv('./Database/Daily_long_factor.csv',index_col=0,header=0)
+            
+            df_get3=df_get3[df_get3['trade_date']>int(month_fst)]
+            df_get3=df_get3[df_get3['trade_date']<=int(month_sec)]
+            df_get3=df_get3.reset_index(drop=True)
+            df_get3.to_csv(savename_long)
+
+            df_get3=pd.read_csv('./Database/Daily_moneyflow.csv',index_col=0,header=0)
+            
+            df_get3=df_get3[df_get3['trade_date']>int(month_fst)]
+            df_get3=df_get3[df_get3['trade_date']<=int(month_sec)]
+            df_get3=df_get3.reset_index(drop=True)
+            df_get3.to_csv(savename_moneyflow)
+
+
+        return savename,savename_adj,savename_long,savename_moneyflow
+
     def real_get_change(self,path_his):
 
         df_history=pd.read_csv(path_his,index_col=0,header=0)
@@ -1096,8 +1171,8 @@ class Dataget(object):
         cols = list(df_history)
 
         df_history=df_history.append(df_real,sort=False)
-
-        df_history = df_history.ix[:, cols]
+        #print(df_history)
+        df_history = df_history.loc[:, cols]
 
 
         df_history=df_history.reset_index(drop=True)

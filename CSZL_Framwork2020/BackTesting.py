@@ -41,9 +41,9 @@ class BackTesting(object):
         #dayC='20160420'
         #dayD='20200919'
 
-        dayA='20170220'
-        dayB='20190605'
-        dayC='20200701'
+        dayA='20130220'
+        dayB='20180605'
+        dayC='20180701'
         dayD='20201211'
 
         #dayA='20160420'
@@ -131,22 +131,22 @@ class BackTesting(object):
 
         SuperGet=Dataget.Dataget()
 
-        updateday="20210209"
+        updateday="20210804"
 
-        #####刷新资金量
-        #SuperGet.update_moneyflow('20130101',updateday)
+        ######刷新资金量
+        SuperGet.update_moneyflow('20130101',updateday)
 
-        ###刷新数据库
-        #SuperGet.updatedaily('20130101',updateday)
+        ##刷新数据库
+        SuperGet.updatedaily('20100101',updateday)
 
-        ###刷新复权因子
-        #SuperGet.updatedaily_adj_factor('20130101',updateday)
+        ##刷新复权因子
+        SuperGet.updatedaily_adj_factor('20100101',updateday)
 
-        ###刷新经济指标
-        #SuperGet.updatedaily_long_factors('20130101',updateday)
+        ##刷新经济指标
+        SuperGet.updatedaily_long_factors('20100101',updateday)
 
-        ###刷新个股波动范围
-        #SuperGet.update_stk_limit('20130101',updateday)
+        ##刷新个股波动范围
+        SuperGet.update_stk_limit('20100101',updateday)
 
         ######刷新个股板块信息
         ####SuperGet.update_concept()
@@ -161,19 +161,24 @@ class BackTesting(object):
 
         #dayA='20170220'
         dayA='20130219'
-        dayB='20170620'
-        dayC='20170605'
-        dayD='20210209'
+        dayB='20210716'
+        dayC='20210301'
+        dayD='20210804'
 
-        #dayA='20170220'
-        #dayB='20200628'
-        #dayC='20130505'
-        #dayD='20161231'
+        #dayA='20170219'
+        #dayB='20190528'
+        #dayC='20200601'
+        #dayD='20210604'
 
-        #dayA='20130420'
-        #dayB='20200906'
-        #dayC='20130620'
-        #dayD='20160602'
+        #dayA='20190401'
+        #dayB='20210513'
+        #dayC='20130219'
+        #dayD='20190430'
+
+        #dayA='20130219'
+        #dayB='20170528'
+        #dayC='20170601'
+        #dayD='20210604'
 
         ##选择日期
         dataset_adj_train=SuperGet.getDataSet_adj_factor(dayA,dayB)
@@ -192,10 +197,10 @@ class BackTesting(object):
         dataset_stk_limit_test=SuperGet.getDataSet_stk_limit(dayC,dayD)
 
         ###测试添加资金量指标
-        #dataset_moneyflow_train=SuperGet.getDataSet_moneyflow(dayA,dayB)
-        #dataset_moneyflow_test=SuperGet.getDataSet_moneyflow(dayC,dayD)
-        dataset_moneyflow_train=[]
-        dataset_moneyflow_test=[]
+        dataset_moneyflow_train=SuperGet.getDataSet_moneyflow(dayA,dayB)
+        dataset_moneyflow_test=SuperGet.getDataSet_moneyflow(dayC,dayD)
+        #dataset_moneyflow_train=[]
+        #dataset_moneyflow_test=[]
 
         #加上基础板块指标等固定属性
         dataset_basic,dataset_conceptlist=SuperGet.getDataSet_basic()
@@ -207,8 +212,8 @@ class BackTesting(object):
 
         #选择特征工程
         
-        #cur_fe=FE.FEg30eom0110onlinee()
-        cur_fe=FE.FEg30eom0110onlinej()
+        #cur_fe=FE.FEg30eom0110network()
+        cur_fe=FE.FEg30eom0110onlinew6()
         
         #cur_fe=FE.trend_following()
         #cur_fe=FE.FEg30eom_start1213a()
@@ -237,7 +242,9 @@ class BackTesting(object):
         #FE_test=cur_fe.create(dataset_test,dataset_adj_test,dataset_moneyflow_test)
 
         #选择模型
-        cur_model=Models.LGBmodel()
+        #cur_model=Models.Networkmodel_20()
+        cur_model=Models.LGBmodel_20()
+        
         #cur_model=Models.LGBmodel_reg()
         #cur_model=models.LGBmodel_highstop()
         #训练模型
