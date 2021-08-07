@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     bt=BT.BackTesting()
 
-    ##bt.backTesting()
+    ###bt.backTesting()
     bt.TodayTesting()
 
     #bt.backtesting_forpara()
