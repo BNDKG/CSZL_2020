@@ -5,6 +5,10 @@ import FeatureEnvironment as FE
 import Dataget
 import Models
 
+import pandas as pd
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
 class BackTesting(object):
     """description of class"""
@@ -13,21 +17,21 @@ class BackTesting(object):
 
         SuperGet=Dataget.Dataget()
 
-        updateday="20210806"
+        updateday="20211217"
 
-        #######刷新资金量
+        #####刷新资金量
         #SuperGet.update_moneyflow('20130101',updateday)
 
-        ###刷新数据库
+        ####刷新数据库
         #SuperGet.updatedaily('20100101',updateday)
 
-        ###刷新复权因子
+        ####刷新复权因子
         #SuperGet.updatedaily_adj_factor('20100101',updateday)
 
-        ###刷新经济指标
+        ####刷新经济指标
         #SuperGet.updatedaily_long_factors('20100101',updateday)
 
-        ###刷新个股波动范围
+        ####刷新个股波动范围
         #SuperGet.update_stk_limit('20100101',updateday)
 
         ######刷新个股板块信息
@@ -40,27 +44,47 @@ class BackTesting(object):
         #dayB='20160603'
         #dayC='20160420'
         #dayD='20200919'
-
+        
         #dayA='20170220'
-        dayA='20130219'
-        dayB='20210730'
-        dayC='20210301'
-        dayD='20210806'
+        #dayA='20130219'
+        #dayB='20211120'
+        #dayC='20210501'
+        #dayD='20211217'
 
         #dayA='20170219'
         #dayB='20190528'
-        #dayC='20200601'
+        #dayC='20190601'
         #dayD='20210604'
 
+        #dayA='20190119'
+        #dayB='20190528'
+        #dayC='20190601'
+        #dayD='20200604'
+        
         #dayA='20190401'
-        #dayB='20210513'
+        #dayB='20210913'
         #dayC='20130219'
-        #dayD='20190430'
+        #dayD='20190401'
 
         #dayA='20130219'
-        #dayB='20170528'
-        #dayC='20170601'
+        #dayB='20160901'
+        #dayC='20160901'
+        #dayD='20200904'
+        #dayC='20210101'
         #dayD='20210604'
+
+        dayA='20130219'
+        dayB='20170528'
+        dayC='20170601'
+        dayD='20210604'
+
+        #dayA='20130219'
+        #dayB='20190528'
+        #dayC='20190601'
+        #dayD='20210820'
+
+        #dayC='20210201'
+        #dayD='20211029'
 
         ##选择日期
         dataset_adj_train=SuperGet.getDataSet_adj_factor(dayA,dayB)
@@ -94,7 +118,16 @@ class BackTesting(object):
         #选择特征工程
         
         #cur_fe=FE.FEg30eom0110network()
-        cur_fe=FE.FEg30eom0110onlinew6()
+        #cur_fe=FE.FEg30eom0110onlinew6()
+        
+        cur_fe=FE.FE_a29()
+        #cur_fe=FE.FE_qliba2()
+        
+        #cur_fe=FE.FEfast_b02()
+        
+        #cur_fe=FE.FEonlinew_a21()
+        #cur_fe=FE.FEfast_a23_pos()
+        
         
         #cur_fe=FE.trend_following()
         #cur_fe=FE.FEg30eom_start1213a()
@@ -105,6 +138,13 @@ class BackTesting(object):
         FE_test=cur_fe.create(dataset_test,dataset_adj_test,dataset_stk_limit_test,\
             dataset_moneyflow_test,dataset_long_test,dataset_basic,dataset_conceptlist,\
             dataset_concept,dataset_conceptmixed)
+
+        #FE_train=cur_fe.create(True,dataset_train,dataset_adj_train,dataset_stk_limit_train,\
+        #    dataset_moneyflow_train,dataset_long_train,dataset_basic,dataset_conceptlist,\
+        #    dataset_concept,dataset_conceptmixed)
+        #FE_test=cur_fe.create(False,dataset_test,dataset_adj_test,dataset_stk_limit_test,\
+        #    dataset_moneyflow_test,dataset_long_test,dataset_basic,dataset_conceptlist,\
+        #    dataset_concept,dataset_conceptmixed)
 
         #选择模型
         #cur_model=Models.Networkmodel_20()
@@ -125,6 +165,183 @@ class BackTesting(object):
 
 
         sdfsdf=1
+
+    def changetoqlib2(self):
+
+        toqlib_df=pd.read_csv('./seesee.csv',index_col=0,header=0)       
+        toqlib_df2=pd.read_csv('./qlibdataset.csv',index_col=0,header=0)   
+
+        toqlib_df=pd.merge(toqlib_df, toqlib_df2, how='left', on=['datetime','instrument'])
+        
+        print(toqlib_df)
+
+        toqlib_df.rename(columns={'datetime':'datetime','instrument':'instrument','score_y':'score'}, inplace = True)
+        toqlib_df.drop(['score_x'],axis=1,inplace=True)
+
+        toqlib_df.to_csv('qlibdataset333.csv')
+
+        intsdfafsd=6
+
+
+    def Topk(self):
+
+        df_all = pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)
+        df_adj_all=pd.read_csv('./Database/Daily_adj_factor.csv',index_col=0,header=0)
+
+        df_all=pd.merge(df_all, df_adj_all, how='left', on=['ts_code','trade_date'])
+
+        score_df = pd.read_csv('zzzzfackdatapred.csv',index_col=0,header=0)
+        #print(df_all)
+        print(score_df)
+
+        hold_all=50
+        change_num=10
+        account=100000000
+        buy_pct=0.9
+        Trans_cost=0.997        #千二
+
+        codelist=pd.DataFrame(columns=('ts_code','buyprice','buy_amount','adj_factor'))
+        codelist_buffer=pd.DataFrame(columns=('ts_code','buyprice','buy_amount','adj_factor'))
+        #codelist=codelist.append([{'ts_code':1,'buyprice':1,'amount':1,'adjflag':1}])
+        #print(codelist)
+
+        score_df=score_df.sort_values(by=['trade_date'])
+        datelist=score_df['trade_date'].unique()
+        cur_hold_num=0
+        print(datelist)
+    
+        days=0
+        show3=[]
+        for cur_date in datelist:
+
+
+            cur_df_all=df_all[df_all['trade_date'].isin([cur_date])]
+            cur_score_df=score_df[score_df['trade_date'].isin([cur_date])]
+
+            cur_merge_df=pd.merge(cur_df_all,cur_score_df, how='left', on=['trade_date','ts_code'])
+
+            cur_merge_df.fillna(0, inplace=True)
+
+            code_value_sum=0
+            if(codelist.shape[0]>0):
+                codelist_buffer=pd.merge(codelist,cur_merge_df, how='left', on=['ts_code'])
+                codelist_buffer['value']=codelist_buffer['buy_amount']*codelist_buffer['close']
+                code_value_sum=codelist_buffer['value'].sum()
+
+            #todo fillna
+            #pd.merge(df_all, df_long_all, how='inner', on=['ts_code','trade_date'])
+            #print(cur_merge_df)
+
+            #sell==========================
+            sellto=hold_all-change_num
+            sellnum=cur_hold_num-sellto
+
+            if(sellnum>0):
+                #todo can't sell limit
+                codelist_buffer=codelist_buffer.sort_values(by=['mix'])
+
+                selllist=codelist_buffer.head(sellnum)     
+                codelist.drop(codelist[codelist['ts_code'].isin(selllist['ts_code'])].index,inplace=True)
+
+                codelist_buffer.drop(codelist_buffer[codelist_buffer['ts_code'].isin(selllist['ts_code'])].index,inplace=True)
+
+                cur_hold_num-=sellnum
+
+                account=account+selllist['value'].sum()*Trans_cost
+
+                sdfafa=1
+
+            #buy==========================
+            buyto=hold_all
+            buynum=buyto-cur_hold_num
+
+            if(buynum>0):
+
+                buy_all_value=0
+                if(codelist.shape[0]>0):
+                    hold_code_sum=codelist_buffer['value'].sum()
+                    buy_all_value=(account+hold_code_sum)*buy_pct-hold_code_sum
+
+                else:
+                    buy_all_value=account*buy_pct
+
+                #when account too low then don't do anything
+                if(buy_all_value<10000):
+                    continue
+
+                code_amount_buy=buy_all_value/buynum
+
+                cur_merge_df=cur_merge_df.sort_values(by=['mix'])
+
+                buylist=cur_merge_df
+                #single code no repeat
+                buylist=buylist[~buylist['ts_code'].isin(codelist['ts_code'])]
+                buylist=buylist.tail(buynum)
+
+                buylist.loc[:,'buyuse']=code_amount_buy/buylist['close']
+                #buylist['buyuse']=code_amount_buy/buylist['close']
+                buylist.loc[:,'buyuse']=buylist['buyuse'].round(-2)
+                buylist.loc[:,'buyuse']=buylist['buyuse'].astype(int)
+                buylist['value']=buylist['close']*buylist['buyuse']
+
+                #print(buylist)
+                account=account-buylist['value'].sum()
+
+                savebuylist=buylist[['ts_code','close','buyuse','adj_factor']]
+                savebuylist.columns = ['ts_code','buyprice','buy_amount','adj_factor']
+
+                codelist=codelist.append(savebuylist)
+                #todo 这里因为下个循环drop会用到index如果不重新排序会造成问题，先这样改如果需要提升速度再进行修正
+                codelist.reset_index(inplace=True,drop=True)
+                cur_hold_num+=buynum
+                sdfafa=1
+
+
+            #print(codelist)
+            codelist_buffer=pd.merge(codelist,cur_merge_df, how='left', on=['ts_code'])
+            codelist_buffer['value']=codelist_buffer['buy_amount']*codelist_buffer['close']
+            code_value_sum=codelist_buffer['value'].sum()
+            #print(account+code_value_sum)
+            print(cur_date)
+            show3.append(account+code_value_sum)
+            days+=1
+
+
+        days=np.arange(1,days+1)
+        plt.plot(days,show3,c='green',label="my model head10mean")
+
+        plt.legend()
+
+        plt.show()
+
+        input()
+        asdffd=1
+
+    def qlib2CSZL(self):
+
+        toqlib_df=pd.read_csv('./seesee.csv',header=0)       
+        #toqlib_df2=pd.read_csv('./qlibdataset.csv',index_col=0,header=0)   
+
+        toqlib_df.rename(columns={'datetime':'trade_date','instrument':'ts_code','score':'mix'}, inplace = True)
+        print(toqlib_df.dtypes)
+        print(toqlib_df)
+        toqlib_df['trade_date'] = pd.to_datetime(toqlib_df['trade_date'], format='%Y-%m-%d')
+        toqlib_df['trade_date']=toqlib_df['trade_date'].apply(lambda x: x.strftime('%Y%m%d'))
+
+        toqlib_df['ts_codeL'] = toqlib_df['ts_code'].str[:2]
+        toqlib_df['ts_codeR'] = toqlib_df['ts_code'].str[2:]
+
+        toqlib_df['ts_codeR'] = toqlib_df['ts_codeR'].apply(lambda s: s+'.')
+
+        toqlib_df['ts_code']=toqlib_df['ts_codeR'].str.cat(toqlib_df['ts_codeL'])
+
+        toqlib_df.drop(['ts_codeL','ts_codeR'],axis=1,inplace=True)
+        print(toqlib_df.dtypes)
+        print(toqlib_df)
+
+        toqlib_df.to_csv('qlibdataset333.csv')
+
+        intsdfafsd=6
 
     def backTestingWithPredictDatas(self):
         #展示类

@@ -31,7 +31,7 @@ class Predict(object):
         #选择特征工程
         #切换为e
         #cur_fe=FE.FEg30eom0110onlinef()
-        cur_fe=FE.FEg30eom0110onlinew6d()   
+        cur_fe=FE.FEonlinew_a31()   
         cur_fe.real_FE()
 
         #
@@ -40,10 +40,10 @@ class Predict(object):
         print(month_sec)
         #选择模型
         cur_model=Models.LGBmodel_20()
-        cur_model.real_lgb_predict('lgb14.pkl','out1.csv')
-        cur_model.real_lgb_predict('lgb24.pkl','out2.csv')
-        cur_model.real_lgb_predict('lgb34.pkl','out3.csv')
-        cur_model.real_lgb_predict('lgb44.pkl','out4.csv')
+        cur_model.real_lgb_predict('lgb16.pkl','out1.csv')
+        cur_model.real_lgb_predict('lgb26.pkl','out2.csv')
+        cur_model.real_lgb_predict('lgb36.pkl','out3.csv')
+        cur_model.real_lgb_predict('lgb46.pkl','out4.csv')
 
         #展示类
         dis=Display.Display()
@@ -79,9 +79,9 @@ class Predict(object):
             if(self.CSZL_TimeCheck()):       
 
                 if(cur_inputflag==1):
-                    self.TodayPredict5Day_0517()
+                    self.TodayPredict5Day_0606()
                 else:
-                    self.TodayPredict5Day_0517()
+                    self.TodayPredict5Day_0606()
 
                 time.sleep(10000) 
         

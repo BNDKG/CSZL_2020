@@ -30,6 +30,23 @@ import random
 #两个主要功能 实时预测 和 回测
 #其他功能 基金选择 参数寻找
 
+#from sklearn import tree
+#from sklearn.datasets import load_iris
+
+#iris = load_iris()
+#clf = tree.DecisionTreeClassifier()
+#clf = clf.fit(iris.data, iris.target)
+
+#import pydotplus
+#from IPython.display import Image
+#dot_data = tree.export_graphviz(clf, out_file=None, 
+#                         feature_names=iris.feature_names,  
+#                         class_names=iris.target_names,  
+#                         filled=True, rounded=True, special_characters=True)  
+#graph = pydotplus.graph_from_dot_data(dot_data)
+#graph.write_pdf("demo.pdf") 
+
+#asdsf=1
 
 if __name__ == '__main__':
 
@@ -81,7 +98,7 @@ if __name__ == '__main__':
     #df = pro.stk_limit(ts_code='000018.SZ', start_date='20191115', end_date='20191230')
     #print(df)
     #zzz=Predict.Predict()
-    #zzz.PredictBackRound()
+    ##zzz.PredictBackRound()
     #zzz.TodayPredict5Day_0606()
 
     #dis=Display.Display()
@@ -93,6 +110,8 @@ if __name__ == '__main__':
 
     bt=BT.BackTesting()
 
+    bt.Topk()
+    #bt.qlib2CSZL()
     ###bt.backTesting()
     bt.TodayTesting()
 

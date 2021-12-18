@@ -707,7 +707,7 @@ class Dataget(object):
                 print('数据集生成完成')
             except Exception as e:
                 #没有的情况下list为空
-                print("错误，请先调用updatedaily_stk_limit或检查其他问题")
+                print("错误，请先调用update_concept或检查其他问题")
         return filename
 
     def update_basic(self):
@@ -792,7 +792,7 @@ class Dataget(object):
                 print('数据集生成完成')
             except Exception as e:
                 #没有的情况下list为空
-                print("错误，请先调用updatedaily_stk_limit或检查其他问题")
+                print("错误，请检查其他问题")
         return filename
 
     def getDataSet_basic(self):
@@ -817,7 +817,7 @@ class Dataget(object):
                 print('数据集生成完成')
             except Exception as e:
                 #没有的情况下list为空
-                print("错误，请先调用updatedaily_stk_limit或检查其他问题")
+                print("错误，请先调用update_basic或检查其他问题")
         return filename,filename2
 
     def get_history_dateset(self):

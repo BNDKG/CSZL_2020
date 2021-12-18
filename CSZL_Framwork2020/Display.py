@@ -1,10 +1,13 @@
 #coding=utf-8
+
 import pandas as pd
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import tushare as ts
 import os
+
+
 
 from numpy import *
 
@@ -23,8 +26,10 @@ class Display(object):
 
         new_train_times=4
 
-        Y=[-12,-6,-3,-2,-1,0,0,0,0,0,0,1,1,1,1,1,2,3,7,14]
-        #Y=[-48,-6,-3,-2,-1,0,0,0,0,0,0,1,1,1,1,1,2,3,6,48]
+        #Y=[-12,-6,-3,-2,-1,0,0,0,0,0,0,1,1,1,1,1,2,3,7,14]
+        Y=[-9.34,-5.48,-4.2,-3.4,-2.7,-2.3,-1.86,-1.47,-1.09,-0.74,-0.38,0,0.398,0.838,1.35,1.96,2.74,3.81,5.58,10.77]
+        #Y=[-9.34,-5.48,-4.2,-3.4,-2.7,-2.3,-1.86,-1.47,-1.09,-0.74,-0.38,0,0.398,0.838,1.35,1.96,2.74,3.81,5.58,10.77]
+        #Y=[-5,-5,-5,-5,-5,-4,-4,0,0,0,0,0,0,4,5,5,5,5,5,5]
         #Y=[-12,-6,-3,-2,-1,1,2,3,6,12]
         #Y=[0,0,0,0,0,0,0,0,0,100]
         #Y=[-8,-4,-3,-2,-1,1,2,3,4,8]
@@ -38,7 +43,7 @@ class Display(object):
         #Y2=[-12,-8,-3,-2,-1,1,2,3,6,12]
         #Y=[-12,-7,-3,-2,-1,1,0,1,4,7]
 
-        codechoice=3
+        codechoice=20
         dayrange=5
 
         all_csv_path=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)       
@@ -70,7 +75,8 @@ class Display(object):
             path_new=os.path.splitext(path)[0]+str(counter)+".csv"
 
             ss=pd.read_csv(path_new,index_col=0,header=0)
-            if(counter<4):
+            #if(counter<4):
+            if(counter<8):
                 #ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]+ss['5']*Y[5]+ss['6']*Y[6]+ss['7']*Y[7]+ss['8']*Y[8]+ss['9']*Y[9]+ss['10']*Y[10]+ss['11']*Y[11]+ss['12']*Y[12]+ss['13']*Y[13]+ss['14']*Y[14]
                 ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]+ss['5']*Y[5]+ss['6']*Y[6]+ss['7']*Y[7]+ss['8']*Y[8]+ss['9']*Y[9]+ss['10']*Y[10]+ss['11']*Y[11]+ss['12']*Y[12]+ss['13']*Y[13]+ss['14']*Y[14]+ss['15']*Y[15]+ss['16']*Y[16]+ss['17']*Y[17]+ss['18']*Y[18]+ss['19']*Y[19]
 
@@ -78,34 +84,51 @@ class Display(object):
                 #ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]+ss['5']*Y[5]+ss['6']*Y[6]+ss['7']*Y[7]+ss['8']*Y[8]+ss['9']*Y[9]
                 #ss['mix']=(ss['0']**2)*Y[0]+(ss['1']**2)*Y[1]+(ss['2']**2)*Y[2]+(ss['3']**2)*Y[3]+(ss['4']**2)*Y[4]+(ss['5']**2)*Y[5]+(ss['6']**2)*Y[6]+(ss['7']**2)*Y[7]+(ss['8']**2)*Y[8]+(ss['9']**2)*Y[9]
                 #ss['mix']=(ss['9']/ss['0'])*8+(ss['8']/ss['1'])*4+(ss['7']/ss['2'])*2+(ss['6']/ss['3'])*1
-                ss['mix']=ss.groupby('trade_date')['mix'].rank(ascending=True,pct=False,method='first')
+                ss['mix']=ss.groupby('trade_date')['mix'].rank(ascending=True,pct=True,method='first')
+
             else:
                 ss['mix']=ss['0']
                 ss['mix']=ss.groupby('trade_date')['mix'].rank(ascending=True,pct=False,method='first')
 
             #ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]
+            #see=ss[ss['trade_date']==20201113]
+            #see=see[see['ts_code']=='300208.SZ']
+            #print(see['mix'])
             showsource_list.append(ss)
         
         #showsource_list[0]['mix']=showsource_list[0].groupby('trade_date')['mix'].rank(ascending=False)
         showsource=showsource_list[0]
         print(showsource_list[0])
         for counter in range(new_train_times):
+
             if counter==0:
                 showsource['sum0']=showsource['0']
                 showsource['sum19']=showsource['19']
                 continue
             #showsource['mix']=showsource['mix']+showsource_list[counter].groupby('trade_date')['mix'].rank(ascending=False)
-            showsource['mix']=showsource['mix']+showsource_list[counter]['mix']
+
+            mergedf=showsource_list[counter][['ts_code','trade_date','mix']]
+            print(mergedf)
+            showsource=pd.merge(showsource,mergedf,on=['ts_code','trade_date'],suffixes=('','_new'))
+            
+            #showsource=pd.merge(showsource, showsource_list[counter].iloc[:, ['mix']], how='left', on=['trade_date','ts_code'],suffixes=('mix','mix_2'))
+
+            showsource['mix']=showsource['mix']+showsource['mix_new']
+            showsource.drop(['mix_new'],axis=1,inplace=True)
+
             showsource['sum0']=showsource['sum0']+showsource_list[counter]['0']
             showsource['sum19']=showsource['sum19']+showsource_list[counter]['19']
             sfasfd=12
         
+
         showsource=pd.merge(showsource, all_csv_path, how='left', on=['ts_code','trade_date'])
 
         print(showsource['mix'])
-        databuffer=showsource['trade_date'].unique()
+        #databuffer=showsource['trade_date'].unique()
 
-        #showsource.to_csv('seefef2.csv')
+        #showsource2=showsource[showsource['trade_date']>20201112]
+        #showsource2=showsource2[showsource2['trade_date']<20201120]
+        #showsource2.to_csv('seefef2.csv')
 
         #剔除无法买入的涨停股
         showsource['high_stop']=0
@@ -113,7 +136,7 @@ class Display(object):
         showsource.loc[(showsource['pct_chg']<5.2) & (4.8<showsource['pct_chg']),'high_stop']=1
         showsource.loc[showsource['pre_close']<1.5,'high_stop']=1
         #showsource.loc[showsource['total_mv_rank']>17,'high_stop']=1
-        #showsource.loc[showsource['sum0']<0.04,'high_stop']=1
+        #showsource.loc[showsource['sum0']<0.1,'high_stop']=1
         #删除未大于平均值的19
         #showsource.loc[showsource['sum0']<0.06,'high_stop']=1
         showsource=showsource[showsource['high_stop']==0]
@@ -128,8 +151,10 @@ class Display(object):
         showsource['next_chg']=showsource.groupby('ts_code')['tomorrow_chg'].shift(-1)
         showsource['mix_rank_real']=showsource.groupby('trade_date')['tomorrow_chg'].rank(ascending=False,pct=False,method='first')
 
-
+        #showsource=showsource[showsource['trade_date']>20171230]
         #showsource=showsource[showsource['ts_code'].str.startswith('300')==False]
+
+        databuffer=showsource['trade_date'].unique()
 
         bufferLL=[]
         
@@ -151,6 +176,8 @@ class Display(object):
             ##简易查看
             #dd=cc['tomorrow_chg'].mean()
             #ee=cc.head(10)
+            #print(curdata)
+            #print(ee['ts_code'])
             #ff=ee['tomorrow_chg'].mean()
             #gg=ff-dd
             #print(gg,end='')
@@ -222,11 +249,607 @@ class Display(object):
         #days2,show=self.standard_show(changer,day_interval=1)
         days2,show=self.standard_show_Kelly_Criterion_new(changer,first_base_income=100000,day_interval=dayrange)
         
-        #showsource=showsource[showsource['trade_date']>20190401]
+        self.show_screen(showsource)
+        #showsource=showsource[showsource['trade_date']>20170301]
         showsource=showsource[showsource['trade_date']>20210301]
+        #showsource=showsource[showsource['trade_date']<20170901]
         #showsource=showsource[showsource['mix_rank']<200]
+
         showsource.to_csv('seefef4.csv')
         return days2,show
+
+    def show_all_rate_ens_plus_plus_plus(self,path):
+
+        USE_OTHER_DATASOURCE=False
+        IS_DESC=False
+
+        new_train_times=4
+
+        #Y=[-12,-6,-3,-2,-1,0,0,0,0,0,0,0,0,0,0,1,2,3,6,12]
+        Y=[-9.34,-5.48,-4.2,-3.4,-2.7,-2.3,-1.86,-1.47,-1.09,-0.74,-0.38,0,0.398,0.838,1.35,1.96,2.74,3.81,5.58,10.77]
+        #Y=[-9.34,-5.48,-4.2,-3.4,-2.7,-2.3,-1.86,-1.47,-1.09,-0.74,-0.38,0,0.398,0.838,1.35,1.96,2.74,3.81,5.58,10.77]
+        #Y=[-5,-5,-5,-5,-5,-4,-4,0,0,0,0,0,0,4,5,5,5,5,5,5]
+        #Y=[-12,-6,-3,-2,-1,1,2,3,6,12]
+
+        codechoice=30
+        dayrange=5
+
+        all_csv_path=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)       
+        all_csv_path=all_csv_path.loc[:,['ts_code','trade_date','pct_chg','pre_close','open','low','close','high','amount']]
+        all_csv_path['pct_chg']=all_csv_path['pct_chg'].astype('float64')
+
+        #all_adj=pd.read_csv('./Database/Daily_adj_factor.csv',index_col=0,header=0) 
+        all_csv_path=all_csv_path[all_csv_path['trade_date']>20130101]
+        all_csv_path_fhc=None
+
+        if(USE_OTHER_DATASOURCE):
+            all_csv_path_fhc=pd.read_csv('./qlibdataset333.csv',index_col=0,header=0)
+            print(all_csv_path_fhc)
+            dddd=1
+
+
+        #all_csv_path=pd.merge(all_csv_path, all_adj, how='left', on=['ts_code','trade_date'])
+
+        all_csv_path['open']=all_csv_path['open'].astype('float64')
+        #all_csv_path['low']=all_csv_path['low'].astype('float64')
+        all_csv_path['close']=all_csv_path['close'].astype('float64')
+        #all_csv_path['high']=all_csv_path['high'].astype('float64')
+        all_csv_path['pre_close']=all_csv_path['pre_close'].astype('float64')
+        all_csv_path['open_pct_chg']=(all_csv_path['open']-all_csv_path['pre_close'])/all_csv_path['pre_close']
+        all_csv_path['closeopen_pct_chg']=100*(all_csv_path['close']-all_csv_path['open'])/all_csv_path['open']
+        #all_csv_path['low_pct_chg']=100*(all_csv_path['low']-all_csv_path['pre_close'])/all_csv_path['pre_close']
+        #all_csv_path['low_pct_chg']=100*(all_csv_path['low']-all_csv_path['pre_close'])/all_csv_path['pre_close']
+
+
+        #lowbuy=5
+        #all_csv_path['lowclose_pct_chg']=100*(all_csv_path['close']-all_csv_path['pre_close']*(1+lowbuy/100))/(all_csv_path['pre_close']*(1+lowbuy/100))
+
+
+        #all_csv_path['lowclose_pct_chg']=all_csv_path['low_pct_chg']
+        #all_csv_path['lowclose_pct_chg']=all_csv_path[all_csv_path['lowclose_pct_chg']<lowbuy]
+
+
+
+        ###用来测第一天开盘价买入策略
+        ###all_csv_path['next_open_pct_chg']=all_csv_path.groupby('ts_code')['open_pct_chg'].shift(-1)
+        all_csv_path['next_closeopen_pct_chg']=all_csv_path.groupby('ts_code')['closeopen_pct_chg'].shift(-1)
+        ##all_csv_path['next_low_pct_chg']=all_csv_path.groupby('ts_code')['low_pct_chg'].shift(-1)
+        ##all_csv_path['next_lowclose_pct_chg']=all_csv_path.groupby('ts_code')['lowclose_pct_chg'].shift(-1)
+        all_csv_path['next_open_pct_chg']=all_csv_path.groupby('ts_code')['open_pct_chg'].shift(-1)
+
+        #all_csv_path['open']=all_csv_path['open'].astype('float64')
+        #all_csv_path['next_open']=all_csv_path.groupby('ts_code')['open'].shift(0)
+        #all_csv_path['next_open2']=all_csv_path.groupby('ts_code')['open'].shift(-1)
+        #all_csv_path['pct_chg']=((all_csv_path['next_open2']-all_csv_path['next_open'])/(all_csv_path['next_open']+0.00001))*100
+        #all_csv_path['open']=all_csv_path['pre_close'].astype('float64')
+        #all_csv_path['next_open']=all_csv_path.groupby('ts_code')['open'].shift(0)
+        #all_csv_path['next_open2']=all_csv_path.groupby('ts_code')['open'].shift(-1)
+        #all_csv_path['pct_chg']=((all_csv_path['next_open2']-all_csv_path['next_open'])/(all_csv_path['next_open']+0.00001))*100
+
+
+        #all_csv_path['pct_chg']=all_csv_path.groupby('ts_code')['pct_chg'].shift(-1)
+
+        #提取几天的pctchg
+        for i in range(dayrange):
+            shifti=-i-1
+            tm=all_csv_path.groupby('ts_code')['pct_chg'].shift(shifti)
+            tm.fillna(0, inplace=True)
+            stringi="pct_chg_next_"+str(i+1)
+            all_csv_path[stringi]=tm
+
+
+        all_csv_path['next_buyflag2']=0
+        ##all_csv_path['next_buyflag2']=0
+
+        ##all_csv_path['pct_chg_next_1']=all_csv_path['next_lowclose_pct_chg']
+
+        ##all_csv_path.loc[all_csv_path['next_open_pct_chg']<(lowbuy),'pct_chg_next_1']=all_csv_path['next_closeopen_pct_chg']
+
+        all_csv_path['pct_chg_next_1']=all_csv_path['next_closeopen_pct_chg']
+        all_csv_path.loc[all_csv_path['next_open_pct_chg']>9.5,'next_buyflag2']=1
+
+
+        ##all_csv_path.loc[all_csv_path['next_low_pct_chg']>(lowbuy),'pct_chg_next_1']=0
+        ##all_csv_path.loc[(all_csv_path['next_buyflag']>(9.5))&(all_csv_path['pct_chg_next_1']==0),'next_buyflag2']=1
+        all_csv_path.loc[(all_csv_path['next_buyflag2']==1),'pct_chg_next_1']=0
+        all_csv_path.loc[(all_csv_path['next_buyflag2']==1),'pct_chg_next_2']=0
+        all_csv_path.loc[(all_csv_path['next_buyflag2']==1),'pct_chg_next_3']=0
+        all_csv_path.loc[(all_csv_path['next_buyflag2']==1),'pct_chg_next_4']=0
+        all_csv_path.loc[(all_csv_path['next_buyflag2']==1),'pct_chg_next_5']=0
+
+
+        #all_csv_path.to_csv('testsee1113.csv')
+        showsource=[]
+        if(not USE_OTHER_DATASOURCE):
+
+            showsource_list=[]
+            for counter in range(new_train_times):
+                path_new=os.path.splitext(path)[0]+str(counter)+".csv"
+
+                ss=pd.read_csv(path_new,index_col=0,header=0)
+                #if(counter<4):
+                if(counter<8):
+                    #ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]+ss['5']*Y[5]+ss['6']*Y[6]+ss['7']*Y[7]+ss['8']*Y[8]+ss['9']*Y[9]+ss['10']*Y[10]+ss['11']*Y[11]+ss['12']*Y[12]+ss['13']*Y[13]+ss['14']*Y[14]
+                    ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]+ss['5']*Y[5]+ss['6']*Y[6]+ss['7']*Y[7]+ss['8']*Y[8]+ss['9']*Y[9]+ss['10']*Y[10]+ss['11']*Y[11]+ss['12']*Y[12]+ss['13']*Y[13]+ss['14']*Y[14]+ss['15']*Y[15]+ss['16']*Y[16]+ss['17']*Y[17]+ss['18']*Y[18]+ss['19']*Y[19]
+
+                    #ss['mix']=(ss['0']**0.5)*Y[0]+(ss['1']**0.5)*Y[1]+(ss['2']**0.5)*Y[2]+(ss['3']**0.5)*Y[3]+(ss['4']**0.5)*Y[4]+(ss['5']**0.5)*Y[5]+(ss['6']**0.5)*Y[6]+(ss['7']**0.5)*Y[7]+(ss['8']**0.5)*Y[8]+(ss['9']**0.5)*Y[9]
+                    #ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]+ss['5']*Y[5]+ss['6']*Y[6]+ss['7']*Y[7]+ss['8']*Y[8]+ss['9']*Y[9]
+                    #ss['mix']=(ss['0']**2)*Y[0]+(ss['1']**2)*Y[1]+(ss['2']**2)*Y[2]+(ss['3']**2)*Y[3]+(ss['4']**2)*Y[4]+(ss['5']**2)*Y[5]+(ss['6']**2)*Y[6]+(ss['7']**2)*Y[7]+(ss['8']**2)*Y[8]+(ss['9']**2)*Y[9]
+                    #ss['mix']=(ss['9']/ss['0'])*8+(ss['8']/ss['1'])*4+(ss['7']/ss['2'])*2+(ss['6']/ss['3'])*1
+                    ss['mix']=ss.groupby('trade_date')['mix'].rank(ascending=True,pct=True,method='first')
+
+                else:
+                    ss['mix']=ss['0']
+                    ss['mix']=ss.groupby('trade_date')['mix'].rank(ascending=True,pct=False,method='first')
+
+                #ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]
+                #see=ss[ss['trade_date']==20201113]
+                #see=see[see['ts_code']=='300208.SZ']
+                #print(see['mix'])
+                showsource_list.append(ss)
+        
+            #showsource_list[0]['mix']=showsource_list[0].groupby('trade_date')['mix'].rank(ascending=False)
+            showsource=showsource_list[0]
+            print(showsource_list[0])
+            for counter in range(new_train_times):
+
+                if counter==0:
+                    showsource['sum0']=showsource['0']
+                    showsource['sum19']=showsource['19']
+                    continue
+                #showsource['mix']=showsource['mix']+showsource_list[counter].groupby('trade_date')['mix'].rank(ascending=False)
+
+                mergedf=showsource_list[counter][['ts_code','trade_date','mix']]
+                print(mergedf)
+                showsource=pd.merge(showsource,mergedf,on=['ts_code','trade_date'],suffixes=('','_new'))
+            
+                #showsource=pd.merge(showsource, showsource_list[counter].iloc[:, ['mix']], how='left', on=['trade_date','ts_code'],suffixes=('mix','mix_2'))
+
+                showsource['mix']=showsource['mix']+showsource['mix_new']
+                showsource.drop(['mix_new'],axis=1,inplace=True)
+
+                showsource['sum0']=showsource['sum0']+showsource_list[counter]['0']
+                showsource['sum19']=showsource['sum19']+showsource_list[counter]['19']
+
+            showsource=pd.merge(showsource, all_csv_path, how='left', on=['ts_code','trade_date'])  
+        
+        else:
+
+            showsource=pd.merge(all_csv_path, all_csv_path_fhc, how='left', on=['ts_code','trade_date'])
+
+            showsource.dropna(axis=0,how='any',inplace=True)
+
+            #showsource['mix']=showsource['pred']
+            print(showsource)
+            
+
+
+        print(showsource['mix'])
+        #databuffer=showsource['trade_date'].unique()
+
+        #showsource2=showsource[showsource['trade_date']>20201112]
+        #showsource2=showsource2[showsource2['trade_date']<20201120]
+        #showsource.to_csv('seefef2.csv')
+
+        #剔除无法买入的涨停股
+        showsource['high_stop']=0
+        showsource.loc[showsource['pct_chg']>9.4,'high_stop']=1
+        showsource.loc[(showsource['pct_chg']<5.2) & (4.8<showsource['pct_chg']),'high_stop']=1
+        showsource.loc[showsource['pre_close']<1.5,'high_stop']=1
+
+
+
+        #showsource.loc[showsource['total_mv_rank']>17,'high_stop']=1
+        #showsource.loc[showsource['sum0']<0.1,'high_stop']=1
+        #删除未大于平均值的19
+        #showsource.loc[showsource['sum0']<0.06,'high_stop']=1
+        showsource=showsource[showsource['high_stop']==0]
+
+
+
+        #showsource=showsource[showsource['total_mv_rank']>17]
+        #showsource=showsource[showsource['total_mv_rank']>10]
+
+        showsource['mix_rank']=showsource.groupby('trade_date')['mix'].rank(ascending=False,pct=False,method='first')
+        print(showsource)
+        if(not USE_OTHER_DATASOURCE):
+            showsource['next_chg']=showsource.groupby('ts_code')['tomorrow_chg'].shift(-1)
+            showsource['mix_rank_real']=showsource.groupby('trade_date')['tomorrow_chg'].rank(ascending=False,pct=False,method='first')
+
+        #showsource=showsource[showsource['trade_date']>20171230]
+        #showsource=showsource[showsource['ts_code'].str.startswith('300')==False]
+
+        databuffer=showsource['trade_date'].unique()
+
+        bufferLL=[]
+        
+        index=0
+        maxday=len(databuffer)
+
+        all_csv_path['buyflag']=0
+        all_csv_path=all_csv_path[all_csv_path['trade_date'].isin(databuffer)]
+
+        for curdata in databuffer:
+            #curday=databuffer[index]
+            cur_show=showsource[showsource["trade_date"]==curdata]
+            cur_show=cur_show[cur_show['high_stop']==0]
+            #cur_show=cur_show[cur_show['amount']>10000]
+            #if(curdata<20180101):
+            #    continue
+            cc=cur_show.sort_values(by="mix" , ascending=False)
+
+            ##简易查看
+            #dd=cc['tomorrow_chg'].mean()
+            #ee=cc.head(10)
+            #print(curdata)
+            #print(ee['ts_code'])
+            #ff=ee['tomorrow_chg'].mean()
+            #gg=ff-dd
+            #print(gg,end='')
+            #print('   ',end='')
+            #print(ff,end='')
+            #print('   ',end='')
+            #print(curdata)
+
+            bufferL=[]
+            for i in range(dayrange):
+                stringi="pct_chg_next_"+str(i+1)
+                if(not IS_DESC):
+                    nextlist=cc.head(codechoice)[stringi].values
+                else:
+                    nextlist=cc.tail(codechoice)[stringi].values
+                bufferL.append(nextlist)
+
+            bufferLL.append(bufferL)
+
+            index+=1
+
+        #print(bufferLL)
+        changer=[]
+        index2=0
+        times=codechoice*dayrange
+
+        for curlist in bufferLL:
+            sum=0
+            sumtendency=0
+
+            for i in range(dayrange):
+                buferi=index2-i
+                if buferi>=0:
+                    tempsum=bufferLL[buferi][i].sum()/times
+                    sum+=tempsum
+
+            changer.append(sum)
+
+            index2+=1
+        #print(changer)
+
+        #days2,show=self.standard_show(changer,day_interval=1)
+        days2,show=self.standard_show_Kelly_Criterion_new(changer,first_base_income=100000,day_interval=dayrange)
+        
+        if(True):
+            self.show_screen(showsource)
+
+            #showsource=showsource[showsource['trade_date']>20170301]
+            #showsource=showsource[showsource['trade_date']>20210301]
+            #showsource=showsource[showsource['trade_date']<20200801]
+            #showsource=showsource[showsource['mix_rank']<200]
+
+            #showsource.to_csv('seefef4.csv')
+            #showsource=showsource.loc[:,['ts_code','trade_date','close','open','amount']]
+            showsource=showsource.loc[:,['ts_code','trade_date','mix']]
+            showsource.to_csv('zzzzfackdatapred.csv')
+
+        else:
+            self.changetoqlib(showsource)
+
+
+        return days2,show
+
+    def show_all_rate_ens_plus_plus_plus_day(self,path):
+
+        new_train_times=4
+
+        Y=[-12,-6,-3,-2,-1,0,0,0,0,0,0,0,0,0,0,0,0,1,2,5]
+        #Y=[-9.34,-5.48,-4.2,-3.4,-2.7,-2.3,-1.86,-1.47,-1.09,-0.74,-0.38,0,0.398,0.838,1.35,1.96,2.74,3.81,5.58,10.77]
+        #Y=[-9.34,-5.48,-4.2,-3.4,-2.7,-2.3,-1.86,-1.47,-1.09,-0.74,-0.38,0,0.398,0.838,1.35,1.96,2.74,3.81,5.58,10.77]
+        #Y=[-5,-5,-5,-5,-5,-4,-4,0,0,0,0,0,0,4,5,5,5,5,5,5]
+        #Y=[-12,-6,-3,-2,-1,1,2,3,6,12]
+
+
+        codechoice=30
+        dayrange=5
+
+        all_csv_path=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)       
+        all_csv_path=all_csv_path.loc[:,['ts_code','trade_date','pct_chg','pre_close','open','low','close','high','amount']]
+        all_csv_path['pct_chg']=all_csv_path['pct_chg'].astype('float64')
+
+        #all_adj=pd.read_csv('./Database/Daily_adj_factor.csv',index_col=0,header=0) 
+
+        all_csv_path=all_csv_path[all_csv_path['trade_date']>20130101]
+
+        #all_csv_path=pd.merge(all_csv_path, all_adj, how='left', on=['ts_code','trade_date'])
+
+        all_csv_path['open']=all_csv_path['open'].astype('float64')
+        #all_csv_path['low']=all_csv_path['low'].astype('float64')
+        all_csv_path['close']=all_csv_path['close'].astype('float64')
+        #all_csv_path['high']=all_csv_path['high'].astype('float64')
+        all_csv_path['pre_close']=all_csv_path['pre_close'].astype('float64')
+        all_csv_path['open_pct_chg']=(all_csv_path['open']-all_csv_path['pre_close'])/all_csv_path['pre_close']
+        all_csv_path['closeopen_pct_chg']=100*(all_csv_path['close']-all_csv_path['open'])/all_csv_path['open']
+        #all_csv_path['low_pct_chg']=100*(all_csv_path['low']-all_csv_path['pre_close'])/all_csv_path['pre_close']
+        #all_csv_path['low_pct_chg']=100*(all_csv_path['low']-all_csv_path['pre_close'])/all_csv_path['pre_close']
+
+
+        #lowbuy=5
+        #all_csv_path['lowclose_pct_chg']=100*(all_csv_path['close']-all_csv_path['pre_close']*(1+lowbuy/100))/(all_csv_path['pre_close']*(1+lowbuy/100))
+
+
+        #all_csv_path['lowclose_pct_chg']=all_csv_path['low_pct_chg']
+        #all_csv_path['lowclose_pct_chg']=all_csv_path[all_csv_path['lowclose_pct_chg']<lowbuy]
+
+
+
+        ###用来测第一天开盘价买入策略
+        ###all_csv_path['next_open_pct_chg']=all_csv_path.groupby('ts_code')['open_pct_chg'].shift(-1)
+        all_csv_path['next_closeopen_pct_chg']=all_csv_path.groupby('ts_code')['closeopen_pct_chg'].shift(-1)
+        ##all_csv_path['next_low_pct_chg']=all_csv_path.groupby('ts_code')['low_pct_chg'].shift(-1)
+        ##all_csv_path['next_lowclose_pct_chg']=all_csv_path.groupby('ts_code')['lowclose_pct_chg'].shift(-1)
+        all_csv_path['next_open_pct_chg']=all_csv_path.groupby('ts_code')['open_pct_chg'].shift(-1)
+
+        #all_csv_path['open']=all_csv_path['open'].astype('float64')
+        #all_csv_path['next_open']=all_csv_path.groupby('ts_code')['open'].shift(0)
+        #all_csv_path['next_open2']=all_csv_path.groupby('ts_code')['open'].shift(-1)
+        #all_csv_path['pct_chg']=((all_csv_path['next_open2']-all_csv_path['next_open'])/(all_csv_path['next_open']+0.00001))*100
+        #all_csv_path['open']=all_csv_path['pre_close'].astype('float64')
+        #all_csv_path['next_open']=all_csv_path.groupby('ts_code')['open'].shift(0)
+        #all_csv_path['next_open2']=all_csv_path.groupby('ts_code')['open'].shift(-1)
+        #all_csv_path['pct_chg']=((all_csv_path['next_open2']-all_csv_path['next_open'])/(all_csv_path['next_open']+0.00001))*100
+
+
+        #all_csv_path['pct_chg']=all_csv_path.groupby('ts_code')['pct_chg'].shift(-1)
+
+        #提取几天的pctchg
+        for i in range(dayrange):
+            shifti=-i-1
+            tm=all_csv_path.groupby('ts_code')['pct_chg'].shift(shifti)
+            tm.fillna(0, inplace=True)
+            stringi="pct_chg_next_"+str(i+1)
+            all_csv_path[stringi]=tm
+
+
+        all_csv_path['next_buyflag2']=0
+        ##all_csv_path['next_buyflag2']=0
+
+        ##all_csv_path['pct_chg_next_1']=all_csv_path['next_lowclose_pct_chg']
+
+        ##all_csv_path.loc[all_csv_path['next_open_pct_chg']<(lowbuy),'pct_chg_next_1']=all_csv_path['next_closeopen_pct_chg']
+
+        all_csv_path['pct_chg_next_1']=all_csv_path['next_closeopen_pct_chg']
+        all_csv_path.loc[all_csv_path['next_open_pct_chg']>9.5,'next_buyflag2']=1
+
+
+        ##all_csv_path.loc[all_csv_path['next_low_pct_chg']>(lowbuy),'pct_chg_next_1']=0
+        ##all_csv_path.loc[(all_csv_path['next_buyflag']>(9.5))&(all_csv_path['pct_chg_next_1']==0),'next_buyflag2']=1
+        all_csv_path.loc[(all_csv_path['next_buyflag2']==1),'pct_chg_next_1']=0
+        all_csv_path.loc[(all_csv_path['next_buyflag2']==1),'pct_chg_next_2']=0
+        all_csv_path.loc[(all_csv_path['next_buyflag2']==1),'pct_chg_next_3']=0
+        all_csv_path.loc[(all_csv_path['next_buyflag2']==1),'pct_chg_next_4']=0
+        all_csv_path.loc[(all_csv_path['next_buyflag2']==1),'pct_chg_next_5']=0
+
+
+        #all_csv_path.to_csv('testsee1113.csv')
+
+        showsource_list=[]
+        for counter in range(new_train_times):
+            path_new=os.path.splitext(path)[0]+str(counter)+".csv"
+
+            ss=pd.read_csv(path_new,index_col=0,header=0)
+            #if(counter<4):
+            if(counter<8):
+                #ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]+ss['5']*Y[5]+ss['6']*Y[6]+ss['7']*Y[7]+ss['8']*Y[8]+ss['9']*Y[9]+ss['10']*Y[10]+ss['11']*Y[11]+ss['12']*Y[12]+ss['13']*Y[13]+ss['14']*Y[14]
+                ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]+ss['5']*Y[5]+ss['6']*Y[6]+ss['7']*Y[7]+ss['8']*Y[8]+ss['9']*Y[9]+ss['10']*Y[10]+ss['11']*Y[11]+ss['12']*Y[12]+ss['13']*Y[13]+ss['14']*Y[14]+ss['15']*Y[15]+ss['16']*Y[16]+ss['17']*Y[17]+ss['18']*Y[18]+ss['19']*Y[19]
+
+                #ss['mix']=(ss['0']**0.5)*Y[0]+(ss['1']**0.5)*Y[1]+(ss['2']**0.5)*Y[2]+(ss['3']**0.5)*Y[3]+(ss['4']**0.5)*Y[4]+(ss['5']**0.5)*Y[5]+(ss['6']**0.5)*Y[6]+(ss['7']**0.5)*Y[7]+(ss['8']**0.5)*Y[8]+(ss['9']**0.5)*Y[9]
+                #ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]+ss['5']*Y[5]+ss['6']*Y[6]+ss['7']*Y[7]+ss['8']*Y[8]+ss['9']*Y[9]
+                #ss['mix']=(ss['0']**2)*Y[0]+(ss['1']**2)*Y[1]+(ss['2']**2)*Y[2]+(ss['3']**2)*Y[3]+(ss['4']**2)*Y[4]+(ss['5']**2)*Y[5]+(ss['6']**2)*Y[6]+(ss['7']**2)*Y[7]+(ss['8']**2)*Y[8]+(ss['9']**2)*Y[9]
+                #ss['mix']=(ss['9']/ss['0'])*8+(ss['8']/ss['1'])*4+(ss['7']/ss['2'])*2+(ss['6']/ss['3'])*1
+                ss['mix']=ss.groupby('trade_date')['mix'].rank(ascending=True,pct=True,method='first')
+
+            else:
+                ss['mix']=ss['0']
+                ss['mix']=ss.groupby('trade_date')['mix'].rank(ascending=True,pct=False,method='first')
+
+            #ss['mix']=ss['0']*Y[0]+ss['1']*Y[1]+ss['2']*Y[2]+ss['3']*Y[3]+ss['4']*Y[4]
+            #see=ss[ss['trade_date']==20201113]
+            #see=see[see['ts_code']=='300208.SZ']
+            #print(see['mix'])
+            showsource_list.append(ss)
+        
+        #showsource_list[0]['mix']=showsource_list[0].groupby('trade_date')['mix'].rank(ascending=False)
+        showsource=showsource_list[0]
+        print(showsource_list[0])
+        for counter in range(new_train_times):
+
+            if counter==0:
+                showsource['sum0']=showsource['0']
+                showsource['sum19']=showsource['19']
+                continue
+            #showsource['mix']=showsource['mix']+showsource_list[counter].groupby('trade_date')['mix'].rank(ascending=False)
+
+            mergedf=showsource_list[counter][['ts_code','trade_date','mix']]
+            print(mergedf)
+            showsource=pd.merge(showsource,mergedf,on=['ts_code','trade_date'],suffixes=('','_new'))
+            
+            #showsource=pd.merge(showsource, showsource_list[counter].iloc[:, ['mix']], how='left', on=['trade_date','ts_code'],suffixes=('mix','mix_2'))
+
+            showsource['mix']=showsource['mix']+showsource['mix_new']
+            showsource.drop(['mix_new'],axis=1,inplace=True)
+
+            showsource['sum0']=showsource['sum0']+showsource_list[counter]['0']
+            showsource['sum19']=showsource['sum19']+showsource_list[counter]['19']
+            sfasfd=12
+        
+
+        showsource=pd.merge(showsource, all_csv_path, how='left', on=['ts_code','trade_date'])
+
+
+        print(showsource['mix'])
+        #databuffer=showsource['trade_date'].unique()
+
+        #showsource2=showsource[showsource['trade_date']>20201112]
+        #showsource2=showsource2[showsource2['trade_date']<20201120]
+        #showsource2.to_csv('seefef2.csv')
+
+        #剔除无法买入的涨停股
+        showsource['high_stop']=0
+        showsource.loc[showsource['pct_chg']>9.4,'high_stop']=1
+        showsource.loc[(showsource['pct_chg']<5.2) & (4.8<showsource['pct_chg']),'high_stop']=1
+        showsource.loc[showsource['pre_close']<1.5,'high_stop']=1
+
+
+
+        #showsource.loc[showsource['total_mv_rank']>17,'high_stop']=1
+        #showsource.loc[showsource['sum0']<0.1,'high_stop']=1
+        #删除未大于平均值的19
+        #showsource.loc[showsource['sum0']<0.06,'high_stop']=1
+        showsource=showsource[showsource['high_stop']==0]
+
+
+
+        #showsource=showsource[showsource['total_mv_rank']>17]
+        #showsource=showsource[showsource['total_mv_rank']>10]
+
+        showsource['mix_rank']=showsource.groupby('trade_date')['mix'].rank(ascending=False,pct=False,method='first')
+        print(showsource)
+        showsource['next_chg']=showsource.groupby('ts_code')['tomorrow_chg'].shift(-1)
+        showsource['mix_rank_real']=showsource.groupby('trade_date')['tomorrow_chg'].rank(ascending=False,pct=False,method='first')
+
+        #showsource=showsource[showsource['trade_date']>20171230]
+        #showsource=showsource[showsource['ts_code'].str.startswith('300')==False]
+
+        databuffer=showsource['trade_date'].unique()
+
+        bufferLL=[]
+        
+        index=0
+        maxday=len(databuffer)
+
+        all_csv_path['buyflag']=0
+        all_csv_path=all_csv_path[all_csv_path['trade_date'].isin(databuffer)]
+
+        for curdata in databuffer:
+            #curday=databuffer[index]
+            cur_show=showsource[showsource["trade_date"]==curdata]
+            cur_show=cur_show[cur_show['high_stop']==0]
+            #cur_show=cur_show[cur_show['amount']>10000]
+            #if(curdata<20180101):
+            #    continue
+            cc=cur_show.sort_values(by="mix" , ascending=False)
+
+            ##简易查看
+            #dd=cc['tomorrow_chg'].mean()
+            #ee=cc.head(10)
+            #print(curdata)
+            #print(ee['ts_code'])
+            #ff=ee['tomorrow_chg'].mean()
+            #gg=ff-dd
+            #print(gg,end='')
+            #print('   ',end='')
+            #print(ff,end='')
+            #print('   ',end='')
+            #print(curdata)
+
+            bufferL=[]
+            for i in range(dayrange):
+                stringi="pct_chg_next_"+str(i+1)
+                nextlist=cc.head(codechoice)[stringi].values
+                bufferL.append(nextlist)
+
+            bufferLL.append(bufferL)
+
+            index+=1
+
+        #print(bufferLL)
+        changer=[]
+        index2=0
+        times=codechoice*dayrange
+
+        for curlist in bufferLL:
+            sum=0
+            sumtendency=0
+
+            for i in range(dayrange):
+                buferi=index2-i
+                if buferi>=0:
+                    tempsum=bufferLL[buferi][i].sum()/times
+                    sum+=tempsum
+
+            changer.append(sum)
+
+            index2+=1
+        #print(changer)
+
+        #days2,show=self.standard_show(changer,day_interval=1)
+        days2,show=self.standard_show_Kelly_Criterion_new(changer,first_base_income=100000,day_interval=dayrange)
+        
+        self.show_screen(showsource)
+        #showsource=showsource[showsource['trade_date']>20170301]
+        showsource=showsource[showsource['trade_date']>20210101]
+        #showsource=showsource[showsource['trade_date']<20170901]
+        #showsource=showsource[showsource['mix_rank']<200]
+
+        showsource.to_csv('seefef4.csv')
+        return days2,show
+
+    def changetoqlib(self,toqlib_df):
+
+        #toqlib_df=pd.read_csv('./seefef2.csv',index_col=0,header=0)       
+        toqlib_df=toqlib_df.loc[:,['trade_date','ts_code','mix']]
+
+        toqlib_df['trade_date'] = pd.to_datetime(toqlib_df['trade_date'], format='%Y%m%d')
+
+        toqlib_df['ts_codeL'] = toqlib_df['ts_code'].str[:6]
+        toqlib_df['ts_codeR'] = toqlib_df['ts_code'].str[7:]
+
+        toqlib_df['ts_code']=toqlib_df['ts_codeR'].str.cat(toqlib_df['ts_codeL'])
+
+        toqlib_df.drop(['ts_codeL','ts_codeR'],axis=1,inplace=True)
+
+        toqlib_df.rename(columns={'trade_date':'datetime','ts_code':'instrument', 'mix':'score'}, inplace = True)
+
+        print(toqlib_df)
+
+        toqlib_df.to_csv('qlibdataset.csv',index=None)
+
+        #toqlib_df2=pd.read_csv('qlibdataset.csv',index_col=0,header=0)     
+
+        #toqlib_df2.index = pd.to_datetime(toqlib_df2.index) 
+
+        #print(toqlib_df2)
+
+        intsdfafsd=6
+
+    def show_screen(self,showsource):
+
+        features_to_consider = ['ts_code','trade_date','total_mv_rank','pb_rank','25_pct_rank_min','25_pct_rank_max'
+                                ,'sum0','sum19','pct_chg','pre_close','mix_rank']
+
+        #features_to_consider = ['ts_code','trade_date','total_mv_rank','pb_rank'
+        #                        ,'sum0','sum19','pct_chg','pre_close','mix_rank']
+
+        #features_to_consider = ['ts_code','trade_date','pb_rank','25_pct_rank_min','25_pct_rank_max'
+        #                        ,'sum0','sum19','pct_chg','pre_close','mix_rank']
+        #,'total_mv_rank'
+        Todayshowsource = showsource[features_to_consider]
+
+        month_sec=Todayshowsource['trade_date'].max()
+        Todayshowsource=Todayshowsource[Todayshowsource['trade_date']==month_sec]
+
+
+        Todayshowsource.to_csv('Today.csv')
+
+        return showsource
 
     def scatter(self,path):
         showsource=pd.read_csv(path,index_col=0,header=0)
@@ -266,8 +889,12 @@ class Display(object):
     def plotall(self,path):
 
 
-        days,show3=self.show_all_rate_ens_plus_plus(path)
+        days,show3=self.show_all_rate_ens_plus_plus_plus(path)
         #days,show3=self.show_all_rate_ens_plus_plus_random(path)   #for fhc
+
+        #c={"trade_date":days,"pctchg":show3}
+        #dfout=pd.DataFrame(c,columns=['trade_date','pctchg'])
+        #dfout.to_csv('outseee0901.csv')
 
         print(show3)
 
@@ -530,7 +1157,7 @@ class Display(object):
             #average=buffer2.tail(1)['tomorrow_chg'].mean()
 
             #b=cur_show[cur_show['mix']>0.40]
-            average=b.head(3)['pct_chg_y'].mean()
+            average=b.head(30)['pct_chg_y'].mean()
             #average=b.tail(2000)['pct_chg_y'].mean()
             #average=b.head(3)['tomorrow_chg'].mean()
             #average=b.tail(15)['tomorrow_chg'].mean()
@@ -638,19 +1265,19 @@ class Display(object):
         #Y2=[-12,-8,-3,-2,-1,1,2,3,6,12]
         #Y=[-12,-7,-3,-2,-1,1,0,1,4,7]
 
-        codechoice=1500
+        codechoice=30
         dayrange=5
 
         all_csv_path=pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)       
         all_csv_path=all_csv_path.loc[:,['ts_code','trade_date','pct_chg','pre_close','open','amount']]
         all_csv_path['pct_chg']=all_csv_path['pct_chg'].astype('float64')
 
-        all_csv_path_fhc=pd.read_csv('./oot.csv',index_col=0,header=0)   
+        all_csv_path_fhc=pd.read_csv('./test04_total.csv',index_col=0,header=0)   
 
-        #all_csv_path['open']=all_csv_path['open'].astype('float64')
-        #all_csv_path['next_open']=all_csv_path.groupby('ts_code')['open'].shift(0)
-        #all_csv_path['next_open2']=all_csv_path.groupby('ts_code')['open'].shift(-1)
-        #all_csv_path['pct_chg']=((all_csv_path['next_open2']-all_csv_path['next_open'])/(all_csv_path['next_open']+0.00001))*100
+        all_csv_path['open']=all_csv_path['open'].astype('float64')
+        all_csv_path['next_open']=all_csv_path.groupby('ts_code')['open'].shift(0)
+        all_csv_path['next_open2']=all_csv_path.groupby('ts_code')['open'].shift(-1)
+        all_csv_path['pct_chg']=((all_csv_path['next_open2']-all_csv_path['next_open'])/(all_csv_path['next_open']+0.00001))*100
         #all_csv_path['open']=all_csv_path['pre_close'].astype('float64')
         #all_csv_path['next_open']=all_csv_path.groupby('ts_code')['open'].shift(0)
         #all_csv_path['next_open2']=all_csv_path.groupby('ts_code')['open'].shift(-1)
@@ -710,7 +1337,7 @@ class Display(object):
         databuffer=showsource['trade_date'].unique()
 
         showsource.to_csv('seefef2.csv')
-        #showsource['mix']=showsource['pred']
+        showsource['mix']=showsource['pred']
 
 
         #剔除无法买入的涨停股
@@ -756,7 +1383,8 @@ class Display(object):
 
             ##简易查看
             #dd=cc['tomorrow_chg'].mean()
-            #ee=cc.head(10)
+            ee=cc.tail(5)
+            print(ee['ts_code'])
             #ff=ee['tomorrow_chg'].mean()
             #gg=ff-dd
             #print(gg,end='')
@@ -768,9 +1396,11 @@ class Display(object):
             bufferL=[]
             for i in range(dayrange):
                 stringi="pct_chg_next_"+str(i+1)
-                nextlist=cc.head(codechoice)[stringi].values
+                nextlist=cc.tail(codechoice)[stringi].values
                 bufferL.append(nextlist)
 
+            print(curdata)
+            print(bufferL)
             bufferLL.append(bufferL)
 
             index+=1
@@ -831,7 +1461,7 @@ class Display(object):
         #showsource=showsource[showsource['trade_date']>20190401]
         showsource=showsource[showsource['trade_date']>20210101]
         #showsource=showsource[showsource['mix_rank']<200]
-        showsource.to_csv('seefef4.csv')
+        showsource.to_csv('seefeffhc4.csv')
         return days2,show
 
     def show_all_rate_ens_plus_plus_reg(self,path):
@@ -1157,12 +1787,14 @@ class Display(object):
         return days,show
 
     def standard_show_Kelly_Criterion_new(self,changer,first_base_income=1000000,day_interval=2,label="自己"):
-        Kelly_rate=0.9
+        Kelly_rate=0.90
         start_from=first_base_income
         show=[]
         for curchange in changer:
 
-            start_from=start_from*(1+curchange/100-0.0020/day_interval)*Kelly_rate+start_from*(1-Kelly_rate)
+            #start_from=start_from*(1+curchange/100-0.0015/day_interval)*Kelly_rate+start_from*(1-Kelly_rate)
+            start_from=start_from*((1+curchange/100)*(1-0.0015/day_interval)*Kelly_rate+(1-Kelly_rate))
+            #start_from=start_from*(1+curchange/100-0.0020/5)*Kelly_rate+start_from*(1-Kelly_rate)
             #print(curchange)
             #print(start_from)
             show.append(start_from)

@@ -11,6 +11,7 @@ import lightgbm as lgb
 from sklearn import datasets
 from sklearn.model_selection import StratifiedKFold
 from sklearn.externals import joblib
+#import joblib
 #from sklearn.linear_model import LogisticRegressionCV,LinearRegression
 #from keras.utils import np_utils
 #from keras.models import load_model
@@ -18,7 +19,8 @@ from sklearn.externals import joblib
 #from sklearn.preprocessing import OneHotEncoder
 
 import os
-
+from sklearn.datasets import load_iris
+#import pydotplus
 
 class BaseModel(object):
     """description of class"""
@@ -93,6 +95,16 @@ class LGBmodel_20(BaseModel):
 
             dsadwd=lgb_model.feature_importances_
             print(dsadwd)
+
+            #dot_data=lgb.create_tree_digraph(lgb_model, tree_index=1)
+
+            #dot_data.format='PDF'
+            #lgbmapname='lgboutput_'+str(counter)+'.pdf'
+            #dot_data.render(lgbmapname)
+
+            #graph = pydotplus.graph_from_dot_data(dot_data)
+            #graph.write_pdf("demo.pdf") 
+
             pred_test = lgb_model.predict_proba(train)
 
             data1 = pd.DataFrame(pred_test)
@@ -100,7 +112,8 @@ class LGBmodel_20(BaseModel):
             data1['mix']=0
             #multlist=[-12,-5,-3,-2,-1.5,-1,-0.75,-0.5,-0.25,0,0,0.25,0.5,0.75,1,1.5,2,3,5,12]
             #multlist=[-10,-3,-2,-1,0,0,1,2,3,10]
-            multlist=[-12,-6,-3,-2,-1,0,0,0,0,0,0,0,0,0,0,1,2,3,6,12]
+            multlist=[-9.34,-5.48,-4.2,-3.4,-2.7,-2.3,-1.86,-1.47,-1.09,-0.74,-0.38,0,0.398,0.838,1.35,1.96,2.74,3.81,5.58,10.77]
+            #multlist=[-12,-6,-3,-2,-1,0,0,0,0,0,0,0,0,0,0,1,2,3,6,12]
             #multlist=[-8,-8,0,7,12]
 
             for i in range(20):
@@ -177,51 +190,53 @@ class LGBmodel_20(BaseModel):
             X_fit, X_val = train[train_index_list[counter]],train[test_index_list[counter]]
             y_fit, y_val = y_train[train_index_list[counter]], y_train[test_index_list[counter]]
 
+            print(X_fit)
+
             sample_weights = np.zeros(len(y_fit))
             # your own weight corresponding here:
-            sample_weights[y_fit==0] = 2                                                                                                       
-            sample_weights[y_fit==1] = 1                                                                                                          
-            sample_weights[y_fit==2] = 1                                                                                                            
-            sample_weights[y_fit==3] = 1                                                                                                            
-            sample_weights[y_fit==4] = 1                                                                                                            
-            sample_weights[y_fit==5] = 1                                                                                                            
-            sample_weights[y_fit==6] = 1                                                                                                            
+            sample_weights[y_fit==0] = 4                                                                                                    
+            sample_weights[y_fit==1] = 2                                                                                                          
+            sample_weights[y_fit==2] = 1.5
+            sample_weights[y_fit==3] = 1
+            sample_weights[y_fit==4] = 1
+            sample_weights[y_fit==5] = 1
+            sample_weights[y_fit==6] = 1
             sample_weights[y_fit==7] = 1                                                                                                           
-            sample_weights[y_fit==8] = 1                                                                                                            
+            sample_weights[y_fit==8] = 1
             sample_weights[y_fit==9] = 1                                                                                                           
             sample_weights[y_fit==10] = 1                                                                                                        
             sample_weights[y_fit==11] = 1
-            sample_weights[y_fit==12] = 1                                                                                                             
-            sample_weights[y_fit==13] = 1                                                                                                            
-            sample_weights[y_fit==14] = 1                                                                                                             
-            sample_weights[y_fit==15] = 1                                                                                                             
-            sample_weights[y_fit==16] = 1                                                                                                             
-            sample_weights[y_fit==17] = 1                                                                                                             
-            sample_weights[y_fit==18] = 1                                                                                                             
-            sample_weights[y_fit==19] = 2                                                                                                          
+            sample_weights[y_fit==12] = 1 
+            sample_weights[y_fit==13] = 1
+            sample_weights[y_fit==14] = 1 
+            sample_weights[y_fit==15] = 1.1 
+            sample_weights[y_fit==16] = 1.2 
+            sample_weights[y_fit==17] = 1.2 
+            sample_weights[y_fit==18] = 2 
+            sample_weights[y_fit==19] = 4                                                                                                          
 
             sample_weight_vals = np.zeros(len(y_val))
             # your own weight corresponding here:
-            sample_weight_vals[y_val==0] = 2                                                                                                      
-            sample_weight_vals[y_val==1] = 1                                                                                                          
-            sample_weight_vals[y_val==2] = 1                                                                                                            
-            sample_weight_vals[y_val==3] = 1                                                                                                            
-            sample_weight_vals[y_val==4] = 1                                                                                                            
-            sample_weight_vals[y_val==5] = 1                                                                                                            
-            sample_weight_vals[y_val==6] = 1                                                                                                            
+            sample_weight_vals[y_val==0] = 4
+            sample_weight_vals[y_val==1] = 2
+            sample_weight_vals[y_val==2] = 1.5
+            sample_weight_vals[y_val==3] = 1                                                                                                           
+            sample_weight_vals[y_val==4] = 1
+            sample_weight_vals[y_val==5] = 1
+            sample_weight_vals[y_val==6] = 1
             sample_weight_vals[y_val==7] = 1                                                                                                           
-            sample_weight_vals[y_val==8] = 1                                                                                                            
+            sample_weight_vals[y_val==8] = 1
             sample_weight_vals[y_val==9] = 1                                                                                                           
             sample_weight_vals[y_val==10] = 1                                                                                                        
             sample_weight_vals[y_val==11] = 1
-            sample_weight_vals[y_val==12] = 1                                                                                                             
-            sample_weight_vals[y_val==13] = 1                                                                                                            
-            sample_weight_vals[y_val==14] = 1                                                                                                             
-            sample_weight_vals[y_val==15] = 1                                                                                                             
-            sample_weight_vals[y_val==16] = 1                                                                                                             
-            sample_weight_vals[y_val==17] = 1                                                                                                             
-            sample_weight_vals[y_val==18] = 1                                                                                                         
-            sample_weight_vals[y_val==19] = 2   
+            sample_weight_vals[y_val==12] = 1 
+            sample_weight_vals[y_val==13] = 1
+            sample_weight_vals[y_val==14] = 1 
+            sample_weight_vals[y_val==15] = 1.1 
+            sample_weight_vals[y_val==16] = 1.2 
+            sample_weight_vals[y_val==17] = 1.2 
+            sample_weight_vals[y_val==18] = 2                                                                                                         
+            sample_weight_vals[y_val==19] = 4
 
             #print(y_fit_weight)
 
@@ -240,8 +255,9 @@ class LGBmodel_20(BaseModel):
             #                verbose=100, early_stopping_rounds=1000)
             lgb_model.fit(X_fit, y_fit, eval_metric='multi_error',
                             eval_set=[(X_val, y_val)], 
-                            sample_weight=sample_weights,
-                            eval_sample_weight=[sample_weight_vals],
+                            #sample_weight=sample_weights,
+                            #eval_sample_weight=[sample_weight_vals],
+                            #categorical_feature=[5,],
                             verbose=100, early_stopping_rounds=None)
      
             savepath_new=os.path.splitext(savepath)[0]+str(counter)+".pkl"
@@ -278,7 +294,8 @@ class LGBmodel_20(BaseModel):
         data1['mix']=0
         #multlist=[-10,-3,-2,-1,0,0,1,2,3,10]
         #multlist=[-12,-6,-3,-2,-1,0,0,0,0,0,0,0,0,0,0,1,2,3,6,12]
-        multlist=[-12,-6,-3,-2,-1,0,0,0,0,0,0,1,1,1,1,1,2,3,7,14]
+        #multlist=[-12,-6,-3,-2,-1,0,0,0,0,0,0,1,1,1,1,1,2,3,7,14]
+        multlist=[-9.34,-5.48,-4.2,-3.4,-2.7,-2.3,-1.86,-1.47,-1.09,-0.74,-0.38,0,0.398,0.838,1.35,1.96,2.74,3.81,5.58,10.77]
         
         #[-12,-8,-3,-2,-1,1,2,3,10,18]
         #[-7,-4,-3,-2,-1,1,2,3,4,12]
