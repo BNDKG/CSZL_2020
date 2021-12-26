@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
     bt=BT.BackTesting()
 
-    bt.Topk()
+    #bt.Topk()
     #bt.qlib2CSZL()
     ###bt.backTesting()
     bt.TodayTesting()

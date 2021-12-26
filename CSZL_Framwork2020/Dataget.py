@@ -93,12 +93,12 @@ class Dataget(object):
 
         dsdfsf=1
 
-    def getDataSet(self,start_date,end_date):
+    def getDataSet(self,start_date,end_date,folderpath):
         #获取某日到某日的数据,并保存到temp中
-        filename='./temp/'+'DataSet'+start_date+'to'+end_date+'.csv'
+        filename=folderpath+'DataSet'+start_date+'to'+end_date+'.csv'
 
         #检查目录是否存在
-        FileIO.FileIO.mkdir('./temp/')
+        FileIO.FileIO.mkdir(folderpath)
         #检查文件是否存在
         if(os.path.exists(filename)==False):       
             try:
@@ -197,12 +197,12 @@ class Dataget(object):
 
         dsdfsf=1
 
-    def getDataSet_adj_factor(self,start_date,end_date):
+    def getDataSet_adj_factor(self,start_date,end_date,folderpath):
         #获取某日到某日的数据,并保存到temp中
-        filename='./temp/'+'Daily_adj_factor'+start_date+'to'+end_date+'.csv'
+        filename=folderpath+'Daily_adj_factor'+start_date+'to'+end_date+'.csv'
 
         #检查目录是否存在
-        FileIO.FileIO.mkdir('./temp/')
+        FileIO.FileIO.mkdir(folderpath)
         #检查文件是否存在
         if(os.path.exists(filename)==False):       
             try:
@@ -374,12 +374,12 @@ class Dataget(object):
 
         dsdfsf=1
 
-    def getDataSet_long_factor(self,start_date,end_date):
+    def getDataSet_long_factor(self,start_date,end_date,folderpath):
         #获取某日到某日的数据,并保存到temp中
-        filename='./temp/'+'Daily_long_factor'+start_date+'to'+end_date+'.csv'
+        filename=folderpath+'Daily_long_factor'+start_date+'to'+end_date+'.csv'
 
         #检查目录是否存在
-        FileIO.FileIO.mkdir('./temp/')
+        FileIO.FileIO.mkdir(folderpath)
         #检查文件是否存在
         if(os.path.exists(filename)==False):       
             try:
@@ -482,12 +482,12 @@ class Dataget(object):
 
         dsdfsf=1
 
-    def getDataSet_moneyflow(self,start_date,end_date):
+    def getDataSet_moneyflow(self,start_date,end_date,folderpath):
         #获取某日到某日的数据,并保存到temp中
-        filename='./temp/'+'Daily_moneyflow'+start_date+'to'+end_date+'.csv'
+        filename=folderpath+'Daily_moneyflow'+start_date+'to'+end_date+'.csv'
 
         #检查目录是否存在
-        FileIO.FileIO.mkdir('./temp/')
+        FileIO.FileIO.mkdir(folderpath)
         #检查文件是否存在
         if(os.path.exists(filename)==False):       
             try:
@@ -587,12 +587,12 @@ class Dataget(object):
 
         dsdfsf=1
 
-    def getDataSet_stk_limit(self,start_date,end_date):
+    def getDataSet_stk_limit(self,start_date,end_date,folderpath):
         #获取某日到某日的数据,并保存到temp中
-        filename='./temp/'+'Daily_stk_limit'+start_date+'to'+end_date+'.csv'
+        filename=folderpath+'Daily_stk_limit'+start_date+'to'+end_date+'.csv'
 
         #检查目录是否存在
-        FileIO.FileIO.mkdir('./temp/')
+        FileIO.FileIO.mkdir(folderpath)
         #检查文件是否存在
         if(os.path.exists(filename)==False):       
             try:

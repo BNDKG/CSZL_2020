@@ -17,22 +17,22 @@ class BackTesting(object):
 
         SuperGet=Dataget.Dataget()
 
-        updateday="20211217"
+        updateday="20211224"
 
-        #####刷新资金量
-        #SuperGet.update_moneyflow('20130101',updateday)
+        ####刷新资金量
+        SuperGet.update_moneyflow('20130101',updateday)
 
-        ####刷新数据库
-        #SuperGet.updatedaily('20100101',updateday)
+        ###刷新数据库
+        SuperGet.updatedaily('20100101',updateday)
 
-        ####刷新复权因子
-        #SuperGet.updatedaily_adj_factor('20100101',updateday)
+        ###刷新复权因子
+        SuperGet.updatedaily_adj_factor('20100101',updateday)
 
-        ####刷新经济指标
-        #SuperGet.updatedaily_long_factors('20100101',updateday)
+        ###刷新经济指标
+        SuperGet.updatedaily_long_factors('20100101',updateday)
 
-        ####刷新个股波动范围
-        #SuperGet.update_stk_limit('20100101',updateday)
+        ###刷新个股波动范围
+        SuperGet.update_stk_limit('20100101',updateday)
 
         ######刷新个股板块信息
         ####SuperGet.update_concept()
@@ -46,10 +46,10 @@ class BackTesting(object):
         #dayD='20200919'
         
         #dayA='20170220'
-        #dayA='20130219'
-        #dayB='20211120'
-        #dayC='20210501'
-        #dayD='20211217'
+        dayA='20130219'
+        dayB='20211120'
+        dayC='20210501'
+        dayD='20211224'
 
         #dayA='20170219'
         #dayB='20190528'
@@ -73,10 +73,10 @@ class BackTesting(object):
         #dayC='20210101'
         #dayD='20210604'
 
-        dayA='20130219'
-        dayB='20170528'
-        dayC='20170601'
-        dayD='20210604'
+        #dayA='20130219'
+        #dayB='20170528'
+        #dayC='20170601'
+        #dayD='20210604'
 
         #dayA='20130219'
         #dayB='20190528'
@@ -86,24 +86,27 @@ class BackTesting(object):
         #dayC='20210201'
         #dayD='20211029'
 
-        ##选择日期
-        dataset_adj_train=SuperGet.getDataSet_adj_factor(dayA,dayB)
-        dataset_adj_test=SuperGet.getDataSet_adj_factor(dayC,dayD)
+        #Default_folder_path='./temp/'
+        Default_folder_path='D:/temp/'
 
-        dataset_train=SuperGet.getDataSet(dayA,dayB)
-        dataset_test=SuperGet.getDataSet(dayC,dayD)
+        ##选择日期
+        dataset_adj_train=SuperGet.getDataSet_adj_factor(dayA,dayB,Default_folder_path)
+        dataset_adj_test=SuperGet.getDataSet_adj_factor(dayC,dayD,Default_folder_path)
+
+        dataset_train=SuperGet.getDataSet(dayA,dayB,Default_folder_path)
+        dataset_test=SuperGet.getDataSet(dayC,dayD,Default_folder_path)
 
         #测试添加长期指标
-        dataset_long_train=SuperGet.getDataSet_long_factor(dayA,dayB)
-        dataset_long_test=SuperGet.getDataSet_long_factor(dayC,dayD)
+        dataset_long_train=SuperGet.getDataSet_long_factor(dayA,dayB,Default_folder_path)
+        dataset_long_test=SuperGet.getDataSet_long_factor(dayC,dayD,Default_folder_path)
 
         ##添加确定的stflag防止模型与实际情况的区别
-        dataset_stk_limit_train=SuperGet.getDataSet_stk_limit(dayA,dayB)
-        dataset_stk_limit_test=SuperGet.getDataSet_stk_limit(dayC,dayD)
+        dataset_stk_limit_train=SuperGet.getDataSet_stk_limit(dayA,dayB,Default_folder_path)
+        dataset_stk_limit_test=SuperGet.getDataSet_stk_limit(dayC,dayD,Default_folder_path)
 
         ###测试添加资金量指标
-        dataset_moneyflow_train=SuperGet.getDataSet_moneyflow(dayA,dayB)
-        dataset_moneyflow_test=SuperGet.getDataSet_moneyflow(dayC,dayD)
+        dataset_moneyflow_train=SuperGet.getDataSet_moneyflow(dayA,dayB,Default_folder_path)
+        dataset_moneyflow_test=SuperGet.getDataSet_moneyflow(dayC,dayD,Default_folder_path)
         #dataset_moneyflow_train=[]
         #dataset_moneyflow_test=[]
 
@@ -120,7 +123,7 @@ class BackTesting(object):
         #cur_fe=FE.FEg30eom0110network()
         #cur_fe=FE.FEg30eom0110onlinew6()
         
-        cur_fe=FE.FE_a29()
+        cur_fe=FE.FE_a31()
         #cur_fe=FE.FE_qliba2()
         
         #cur_fe=FE.FEfast_b02()
@@ -187,22 +190,24 @@ class BackTesting(object):
 
         df_all = pd.read_csv('./Database/Dailydata.csv',index_col=0,header=0)
         df_adj_all=pd.read_csv('./Database/Daily_adj_factor.csv',index_col=0,header=0)
-
+        df_limit_all=pd.read_csv('./Database/Daily_stk_limit.csv',index_col=0,header=0)
+        
         df_all=pd.merge(df_all, df_adj_all, how='left', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_limit_all, how='left', on=['ts_code','trade_date'])
 
-        score_df = pd.read_csv('zzzzfackdatapred.csv',index_col=0,header=0)
+        score_df = pd.read_csv('zzzzfackdatapred22.csv',index_col=0,header=0)
         #print(df_all)
         print(score_df)
 
-        hold_all=50
-        change_num=10
+        hold_all=100
+        change_num=20
         account=100000000
         buy_pct=0.9
-        Trans_cost=0.997        #千二
+        Trans_cost=0.997        #千三
 
-        codelist=pd.DataFrame(columns=('ts_code','buyprice','buy_amount','adj_factor'))
-        codelist_buffer=pd.DataFrame(columns=('ts_code','buyprice','buy_amount','adj_factor'))
-        #codelist=codelist.append([{'ts_code':1,'buyprice':1,'amount':1,'adjflag':1}])
+        codelist=pd.DataFrame(columns=('ts_code','lastprice','buy_amount','last_adj_factor'))
+        codelist_buffer=pd.DataFrame(columns=('ts_code','lastprice','buy_amount','last_adj_factor'))
+        #codelist=codelist.append([{'ts_code':1,'lastprice':1,'amount':1,'adjflag':1}])
         #print(codelist)
 
         score_df=score_df.sort_values(by=['trade_date'])
@@ -214,19 +219,45 @@ class BackTesting(object):
         show3=[]
         for cur_date in datelist:
 
-
+            #这里注意停牌的不包含在这个list中
             cur_df_all=df_all[df_all['trade_date'].isin([cur_date])]
-            cur_score_df=score_df[score_df['trade_date'].isin([cur_date])]
 
+            cur_score_df=score_df[score_df['trade_date'].isin([cur_date])]
             cur_merge_df=pd.merge(cur_df_all,cur_score_df, how='left', on=['trade_date','ts_code'])
 
-            cur_merge_df.fillna(0, inplace=True)
+            cur_merge_df['mix'].fillna(-99.99, inplace=True)
+
+            #if(cur_date>20180102):
+            #    cur_merge_df=cur_merge_df.to_csv("dsdf.csv")
 
             code_value_sum=0
             if(codelist.shape[0]>0):
                 codelist_buffer=pd.merge(codelist,cur_merge_df, how='left', on=['ts_code'])
+
+                codelist_buffer['adj_factor'].fillna(9999.99, inplace=True)
+                codelist_buffer['close'].fillna(9999.99, inplace=True)
+                
+
+                codelist_buffer.loc[codelist_buffer['adj_factor']==9999.99,'adj_factor']=codelist_buffer['last_adj_factor']
+                codelist_buffer.loc[codelist_buffer['close']==9999.99,'close']=codelist_buffer['lastprice']
+                
+
+                ###更新除权
+                ##print(codelist_buffer.head(10))
+                codelist_buffer.loc[:,'buy_amount']=codelist_buffer['buy_amount']*codelist_buffer['adj_factor']/codelist_buffer['last_adj_factor']
+
+                #codelist_buffer.loc[:,'last_adj_factor']=codelist_buffer['adj_factor']
+                #codelist_buffer.loc[:,'last_adj_factor']=codelist_buffer['adj_factor']
+
+                #print(codelist_buffer.head(10))
+                codelist.loc[:,'buy_amount']=codelist_buffer['buy_amount']
+                codelist.loc[:,'last_adj_factor']=codelist_buffer['adj_factor']
+                codelist.loc[:,'lastprice']=codelist_buffer['close']
+
                 codelist_buffer['value']=codelist_buffer['buy_amount']*codelist_buffer['close']
-                code_value_sum=codelist_buffer['value'].sum()
+                #codelist_buffer.reset_index(inplace=True,drop=True)
+                
+                #code_value_sum=codelist_buffer['value'].sum()
 
             #todo fillna
             #pd.merge(df_all, df_long_all, how='inner', on=['ts_code','trade_date'])
@@ -239,13 +270,20 @@ class BackTesting(object):
             if(sellnum>0):
                 #todo can't sell limit
                 codelist_buffer=codelist_buffer.sort_values(by=['mix'])
+                #print(codelist_buffer['pct_chg'])
+                #todo can't sell highstop
+                selllist=codelist_buffer
+                #selllist=selllist[selllist['pct_chg']<9]
+                #排除跌停卖出
+                selllist=selllist[selllist['close']!=selllist['down_limit']]
 
-                selllist=codelist_buffer.head(sellnum)     
+                selllist=selllist.head(sellnum)
+
                 codelist.drop(codelist[codelist['ts_code'].isin(selllist['ts_code'])].index,inplace=True)
 
                 codelist_buffer.drop(codelist_buffer[codelist_buffer['ts_code'].isin(selllist['ts_code'])].index,inplace=True)
 
-                cur_hold_num-=sellnum
+                cur_hold_num-=selllist.shape[0]
 
                 account=account+selllist['value'].sum()*Trans_cost
 
@@ -276,6 +314,12 @@ class BackTesting(object):
                 buylist=cur_merge_df
                 #single code no repeat
                 buylist=buylist[~buylist['ts_code'].isin(codelist['ts_code'])]
+
+                #todo can't buy highstop
+                #buylist=buylist[buylist['pct_chg']<4]
+                buylist=buylist[buylist['close']!=buylist['up_limit']]
+                #buylist=buylist[buylist['pct_chg']>-9]
+
                 buylist=buylist.tail(buynum)
 
                 buylist.loc[:,'buyuse']=code_amount_buy/buylist['close']
@@ -288,7 +332,7 @@ class BackTesting(object):
                 account=account-buylist['value'].sum()
 
                 savebuylist=buylist[['ts_code','close','buyuse','adj_factor']]
-                savebuylist.columns = ['ts_code','buyprice','buy_amount','adj_factor']
+                savebuylist.columns = ['ts_code','lastprice','buy_amount','last_adj_factor']
 
                 codelist=codelist.append(savebuylist)
                 #todo 这里因为下个循环drop会用到index如果不重新排序会造成问题，先这样改如果需要提升速度再进行修正
@@ -298,10 +342,13 @@ class BackTesting(object):
 
 
             #print(codelist)
-            codelist_buffer=pd.merge(codelist,cur_merge_df, how='left', on=['ts_code'])
-            codelist_buffer['value']=codelist_buffer['buy_amount']*codelist_buffer['close']
-            code_value_sum=codelist_buffer['value'].sum()
-            #print(account+code_value_sum)
+            #codelist_buffer=pd.merge(codelist,cur_merge_df, how='left', on=['ts_code'])
+            bufferdf=codelist['buy_amount']*codelist['lastprice']
+            #if(cur_date>20171018):
+            #    print(codelist)
+            #print(codelist)
+            code_value_sum=bufferdf.sum()
+            print(account+code_value_sum)
             print(cur_date)
             show3.append(account+code_value_sum)
             days+=1
