@@ -31,7 +31,7 @@
     <Compile Include="Display.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="FeatureEnvironment.py">
+    <Compile Include="FeatureEngineering.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="FileIO.py">

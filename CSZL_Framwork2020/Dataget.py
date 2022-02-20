@@ -1124,20 +1124,54 @@ class Dataget(object):
             code_counter+=1
             if(code_counter>=500):
                 if(len(df_real)):
-                    df_real2=ts.get_realtime_quotes(bufferlist)
-                    df_real=df_real.append(df_real2)
+                    wrongcounter=0
+                    while(1):
+                        try:
+                            df_real2=[]
+                            df_real2=ts.get_realtime_quotes(bufferlist)
+                            df_real=df_real.append(df_real2)
+                            break
+                        except Exception as e:
+                            sleeptime2=random.randint(100,199)
+                            time.sleep(sleeptime2/40)
+                            wrongcounter+=1
+                            if(wrongcounter>10):
+                                break
                 else:
-                    df_real=ts.get_realtime_quotes(bufferlist)
+                    #df_real=ts.get_realtime_quotes(bufferlist)
+                    wrongcounter=0
+                    while(1):
+                        try:
+                            df_real=ts.get_realtime_quotes(bufferlist)
+                            break
+                        except Exception as e:
+                            sleeptime2=random.randint(100,199)
+                            time.sleep(sleeptime2/40)
+                            wrongcounter+=1
+                            if(wrongcounter>10):
+                                break
                 bufferlist=[]            
                 code_counter=0
-                sleeptime=random.randint(50,99)
-                time.sleep(sleeptime/400)
+                sleeptime=random.randint(100,199)
+                time.sleep(sleeptime/40)
                 print(printcounter/len(codelist))
 
             printcounter+=1
+        time.sleep(2)
         if(len(bufferlist)):
-            df_real2=ts.get_realtime_quotes(bufferlist)
-            df_real=df_real.append(df_real2)
+            wrongcounter=0
+            while(1):
+                try:
+                    df_real2=[]
+                    df_real2=ts.get_realtime_quotes(bufferlist)
+                    df_real=df_real.append(df_real2)
+                    break
+                except Exception as e:
+                    sleeptime2=random.randint(100,199)
+                    time.sleep(sleeptime2/40)
+                    wrongcounter+=1
+                    if(wrongcounter>10):
+                        break
 
         #df_real=ts.get_realtime_quotes(['600839','000980','000981'])
         #df_real2=ts.get_realtime_quotes(['000010','600000','600010'])
@@ -1410,3 +1444,28 @@ class Dataget(object):
         #print(test)
         df_all.to_csv('./Database/Found3.csv')
         sdfasfsad=1
+
+    def get_baseline(self,basecode='000905.SH'):
+
+        #000001.SH 上证 000016.SH 50 000688.SH 科创50 000905.SH 中证500 399006.SZ 创业板指
+        #399300.SZ 300 000852.SH 1000 
+
+        savedir='./Database/indexdata'
+        #检查目录是否存在
+        FileIO.FileIO.mkdir(savedir)
+
+        #读取token
+        f = open('token.txt')
+        token = f.read()     #将txt文件的所有内容读入到字符串str中
+        f.close()
+
+        pro = ts.pro_api(token)
+
+
+        df = pro.index_daily(ts_code=basecode)
+
+        savepth=savedir+'/'+basecode+'.csv'
+        df.to_csv(savepth)
+
+
+        return savepth

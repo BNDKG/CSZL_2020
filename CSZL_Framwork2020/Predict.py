@@ -4,7 +4,7 @@
 #import numpy as np
 
 import Display
-import FeatureEnvironment as FE
+import FeatureEngineering as FE
 
 import Dataget
 import Models

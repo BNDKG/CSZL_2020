@@ -544,7 +544,7 @@ class Display(object):
             self.changetoqlib(showsource)
 
 
-        return days2,show
+        return databuffer,show
 
     def show_all_rate_ens_plus_plus_plus_day(self,path):
 
@@ -889,16 +889,26 @@ class Display(object):
     def plotall(self,path):
 
 
-        days,show3=self.show_all_rate_ens_plus_plus_plus(path)
+        databuffer,show3=self.show_all_rate_ens_plus_plus_plus(path)
         #days,show3=self.show_all_rate_ens_plus_plus_random(path)   #for fhc
 
         #c={"trade_date":days,"pctchg":show3}
         #dfout=pd.DataFrame(c,columns=['trade_date','pctchg'])
         #dfout.to_csv('outseee0901.csv')
 
+        days=np.arange(1,databuffer.shape[0]+1)
+
+        eee=np.where(days%5==0)
+
+        daysshow=days[eee]
+        datashow=databuffer[eee]
+        #a = np.random.rand(days.shape[0], 1)
+
         print(show3)
 
         plt.plot(days,show3,c='green',label="my model head10mean")
+
+        plt.xticks(daysshow, datashow,color='blue',rotation=60)
 
         plt.legend()
 

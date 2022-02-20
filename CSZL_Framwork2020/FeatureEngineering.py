@@ -1012,7 +1012,831 @@ class FE_a29(FEbase):
         #'tomorrow_chg'
         df_all.drop(['high_stop','amount','close','real_price'],axis=1,inplace=True)
         df_all.drop(['st_or_otherwrong'],axis=1,inplace=True)
-        #df_all.dropna(axis=0,how='any',inplace=True)
+        df_all.dropna(axis=0,how='any',inplace=True)
+
+        print(df_all)
+        df_all=df_all.reset_index(drop=True)
+
+        return df_all
+
+    def real_FE(self):
+        #新模型预定版本
+
+        df_data=pd.read_csv('real_now.csv',index_col=0,header=0)
+        df_adj_all=pd.read_csv('real_adj_now.csv',index_col=0,header=0)
+        df_money_all=pd.read_csv('real_moneyflow_now.csv',index_col=0,header=0)
+        df_long_all=pd.read_csv('real_long_now.csv',index_col=0,header=0)
+
+        df_money_all.drop(['buy_sm_vol','sell_sm_vol','buy_md_vol','sell_md_vol','buy_lg_vol','sell_lg_vol','buy_md_vol','sell_md_vol'],axis=1,inplace=True)
+        df_money_all.drop(['buy_elg_vol','buy_elg_amount','sell_elg_vol','sell_elg_amount','net_mf_vol'],axis=1,inplace=True)
+        df_money_all.drop(['buy_md_amount','sell_md_amount'],axis=1,inplace=True)
+
+        df_money_all['sm_amount']=df_money_all['buy_sm_amount']-df_money_all['sell_sm_amount']
+        df_money_all['lg_amount']=df_money_all['buy_lg_amount']-df_money_all['sell_lg_amount']
+
+
+        df_money_all.drop(['buy_sm_amount','sell_sm_amount'],axis=1,inplace=True)
+        df_money_all.drop(['buy_lg_amount','sell_lg_amount'],axis=1,inplace=True)
+
+        df_money_all['sm_amount_pos']=df_money_all.groupby('ts_code')['sm_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+        df_money_all['lg_amount_pos']=df_money_all.groupby('ts_code')['lg_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+        df_money_all['net_mf_amount_pos']=df_money_all.groupby('ts_code')['net_mf_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+
+        df_money_all['sm_amount_pos']=df_money_all.groupby('ts_code')['sm_amount_pos'].shift(1)
+        df_money_all['lg_amount_pos']=df_money_all.groupby('ts_code')['lg_amount_pos'].shift(1)
+        df_money_all['net_mf_amount_pos']=df_money_all.groupby('ts_code')['net_mf_amount_pos'].shift(1)
+
+        df_money_all['sm_amount']=df_money_all.groupby('ts_code')['sm_amount'].shift(1)
+        df_money_all['lg_amount']=df_money_all.groupby('ts_code')['lg_amount'].shift(1)
+        df_money_all['net_mf_amount']=df_money_all.groupby('ts_code')['net_mf_amount'].shift(1)
+
+
+        df_all=pd.merge(df_data, df_adj_all, how='left', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_money_all, how='left', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_long_all, how='left', on=['ts_code','trade_date'])
+
+        print(df_all)
+
+        #df_all.drop(['turnover_rate','volume_ratio','pe','pb'],axis=1,inplace=True)
+        df_all.drop(['turnover_rate','volume_ratio','pe','dv_ttm'],axis=1,inplace=True)
+
+        #这里打一个问号
+        #df_all=df_all[df_all['ts_code'].str.startswith('688')==False]
+
+        #df_all=pd.read_csv(bufferstring,index_col=0,header=0,nrows=100000)
+    
+        #df_all.drop(['change','vol'],axis=1,inplace=True)
+ 
+        df_all['ts_code'] = df_all['ts_code'].astype('str') #将原本的int数据类型转换为文本
+
+        df_all['ts_code']  = df_all['ts_code'].str.zfill(6) #用的时候必须加上.str前缀
+
+        print(df_all)
+        ##排除科创版
+        #print(df_all)
+        df_all[["ts_code"]]=df_all[["ts_code"]].astype(str)
+        df_all=df_all[df_all['ts_code'].str.startswith('688')==False]
+        df_all['class1']=0
+        df_all.loc[df_all['ts_code'].str.startswith('30')==True,'class1']=1
+        df_all.loc[df_all['ts_code'].str.startswith('60')==True,'class1']=2
+        df_all.loc[df_all['ts_code'].str.startswith('00')==True,'class1']=3
+
+        #===================================================================================================================================#
+        
+        #复权后价格
+        df_all['adj_factor']=df_all['adj_factor'].fillna(0)
+        df_all['real_price']=df_all['close']*df_all['adj_factor']
+        
+        df_all['real_price']=df_all.groupby('ts_code')['real_price'].shift(1)
+        df_all['real_price']=df_all['real_price']*(1+df_all['pct_chg']/100)
+
+        #===================================================================================================================================#
+
+        df_all['real_price_pos']=df_all.groupby('ts_code')['real_price'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+
+        df_all['total_mv_rank']=df_all.groupby('trade_date')['total_mv'].rank(pct=True)
+        df_all['total_mv_rank']=df_all.groupby('ts_code')['total_mv_rank'].shift(1)
+        df_all['total_mv_rank']=df_all['total_mv_rank']*19.9//1
+
+        df_all['pb_rank']=df_all.groupby('trade_date')['pb'].rank(pct=True)
+        df_all['pb_rank']=df_all.groupby('ts_code')['pb_rank'].shift(1)
+        #df_all['pb_rank']=df_all['pb_rank']*10//1
+
+        df_all['circ_mv_pct']=(df_all['total_mv']-df_all['circ_mv'])/df_all['total_mv']
+        df_all['circ_mv_pct']=df_all.groupby('trade_date')['circ_mv_pct'].rank(pct=True)
+        df_all['circ_mv_pct']=df_all.groupby('ts_code')['circ_mv_pct'].shift(1)
+        #df_all['circ_mv_pct']=df_all['circ_mv_pct']*10//1
+        
+        df_all['ps_ttm']=df_all.groupby('trade_date')['ps_ttm'].rank(pct=True)
+        df_all['ps_ttm']=df_all.groupby('ts_code')['ps_ttm'].shift(1)
+        #df_all['ps_ttm']=df_all['ps_ttm']*10//1
+
+
+        df_all,_=FEsingle.CloseWithHighLow(df_all,25,'min')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,8,'min')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,25,'max')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,8,'max')
+
+        df_all,_=FEsingle.HighLowRange(df_all,8)
+        df_all,_=FEsingle.HighLowRange(df_all,25)  
+        #===================================================================================================================================#
+
+
+        #是否停
+        df_all['high_stop']=0
+        df_all.loc[df_all['pct_chg']>9.4,'high_stop']=1
+        df_all.loc[(df_all['pct_chg']<5.2) & (4.8<df_all['pct_chg']),'high_stop']=1
+
+
+        #1日
+        df_all['chg_rank']=df_all.groupby('trade_date')['pct_chg'].rank(pct=True)
+        #df_all['chg_rank']=df_all['chg_rank']*10//2
+        df_all['pct_chg_abs']=df_all['pct_chg'].abs()
+        df_all['pct_chg_abs_rank']=df_all.groupby('trade_date')['pct_chg_abs'].rank(pct=True)
+
+        df_all=FEsingle.PctChgSumRank(df_all,3)
+        df_all=FEsingle.PctChgSumRank(df_all,6)
+        df_all=FEsingle.PctChgSumRank(df_all,12)
+
+        df_all=FEsingle.PctChgSum(df_all,3)
+        df_all=FEsingle.PctChgSum(df_all,6)
+        df_all=FEsingle.PctChgSum(df_all,12)
+
+        df_all=FEsingle.AmountChgRank(df_all,12)
+
+        #计算三种比例rank
+        dolist=['open','high','low']
+
+        df_all['pct_chg_r']=df_all['pct_chg']
+
+        for curc in dolist:
+            buffer=((df_all[curc]-df_all['pre_close'])*100)/df_all['pre_close']
+            df_all[curc]=buffer
+            df_all[curc]=df_all.groupby('trade_date')[curc].rank(pct=True)
+            #df_all[curc]=df_all[curc]*10//2
+
+        #df_all=FEsingle.PctChgSumRank_Common(df_all,5,'high')
+            
+
+        df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pct_chg_r','pst_amount_rank_12','real_price_pos'],1)
+        #df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pst_amount_rank_12'],2)
+        #df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pst_amount_rank_12'],3)
+
+
+        #删除市值过低的票
+        df_all=df_all[df_all['close']>3]
+        #df_all=df_all[df_all['chg_rank']>0.7]
+        df_all=df_all[df_all['amount']>15000]
+        #df_all=df_all[df_all['total_mv_rank']<12]
+
+        df_all.drop(['close','pre_close','pct_chg','adj_factor','real_price','amount','total_mv','pb','circ_mv','pct_chg_abs'],axis=1,inplace=True)
+
+        #暂时不用的列
+        df_all=df_all[df_all['high_stop']==0]
+        #df_all=df_all[df_all['st_or_otherwrong']==1]
+
+        #'tomorrow_chg'
+        df_all.drop(['high_stop'],axis=1,inplace=True)
+        #df_all.drop(['st_or_otherwrong'],axis=1,inplace=True)
+
+
+        df_all.dropna(axis=0,how='any',inplace=True)
+
+
+        month_sec=df_all['trade_date'].max()
+        df_all=df_all[df_all['trade_date']==month_sec]
+        print(df_all)
+        df_all=df_all.reset_index(drop=True)
+
+        df_all.to_csv('today_train.csv')
+        dwdw=1
+
+class FE_a29_big(FEbase):
+    #这个版本变为3天预测
+    def __init__(self):
+        pass
+
+    def core(self,DataSetName):
+
+        df_data=pd.read_csv(DataSetName[0],index_col=0,header=0)
+        df_adj_all=pd.read_csv(DataSetName[1],index_col=0,header=0)
+        df_limit_all=pd.read_csv(DataSetName[2],index_col=0,header=0)
+        df_money_all=pd.read_csv(DataSetName[3],index_col=0,header=0)
+        df_long_all=pd.read_csv(DataSetName[4],index_col=0,header=0)
+
+        df_money_all.drop(['buy_sm_vol','sell_sm_vol','buy_md_vol','sell_md_vol','buy_lg_vol','sell_lg_vol','buy_md_vol','sell_md_vol'],axis=1,inplace=True)
+        df_money_all.drop(['buy_elg_vol','buy_elg_amount','sell_elg_vol','sell_elg_amount','net_mf_vol'],axis=1,inplace=True)
+        df_money_all.drop(['buy_md_amount','sell_md_amount'],axis=1,inplace=True)
+
+        df_money_all['sm_amount']=df_money_all['buy_sm_amount']-df_money_all['sell_sm_amount']
+        df_money_all['lg_amount']=df_money_all['buy_lg_amount']-df_money_all['sell_lg_amount']
+
+
+        df_money_all.drop(['buy_sm_amount','sell_sm_amount'],axis=1,inplace=True)
+        df_money_all.drop(['buy_lg_amount','sell_lg_amount'],axis=1,inplace=True)
+
+        #df_money_all['sm_amount_pos']=df_money_all.groupby('ts_code')['sm_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+        #df_money_all['lg_amount_pos']=df_money_all.groupby('ts_code')['lg_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+        #df_money_all['net_mf_amount_pos']=df_money_all.groupby('ts_code')['net_mf_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+
+        #df_money_all['sm_amount_pos']=df_money_all.groupby('ts_code')['sm_amount_pos']
+        #df_money_all['lg_amount_pos']=df_money_all.groupby('ts_code')['lg_amount_pos']
+        #df_money_all['net_mf_amount_pos']=df_money_all.groupby('ts_code')['net_mf_amount_pos']
+
+        #df_money_all['sm_amount']=df_money_all.groupby('ts_code')['sm_amount'].shift(1)
+        #df_money_all['lg_amount']=df_money_all.groupby('ts_code')['lg_amount'].shift(1)
+        #df_money_all['net_mf_amount']=df_money_all.groupby('ts_code')['net_mf_amount'].shift(1)
+
+        df_money_all=FEsingle.InputChgSum(df_money_all,5,'sm_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,5,'lg_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,5,'net_mf_amount')
+
+        df_money_all=FEsingle.InputChgSum(df_money_all,12,'sm_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,12,'lg_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,12,'net_mf_amount')
+
+        df_money_all=FEsingle.InputChgSum(df_money_all,25,'sm_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,25,'lg_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,25,'net_mf_amount')
+
+        #df_money_all['sm_amount_25_diff']=df_money_all['sm_amount_25']-df_money_all['sm_amount_12']
+        #df_money_all['sm_amount_12_diff']=df_money_all['sm_amount_12']-df_money_all['sm_amount_5']
+
+        #df_money_all['lg_amount_25_diff']=df_money_all['lg_amount_25']-df_money_all['lg_amount_12']
+        #df_money_all['lg_amount_12_diff']=df_money_all['lg_amount_12']-df_money_all['lg_amount_5']
+
+        #df_money_all['net_mf_amount_25_diff']=df_money_all['net_mf_amount_25']-df_money_all['net_mf_amount_12']
+        #df_money_all['net_mf_amount_12_diff']=df_money_all['net_mf_amount_12']-df_money_all['net_mf_amount_5']
+
+
+        print(df_money_all)
+
+        df_all=pd.merge(df_data, df_adj_all, how='inner', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_limit_all, how='inner', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_money_all, how='inner', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_long_all, how='inner', on=['ts_code','trade_date'])
+        df_all.drop(['turnover_rate','volume_ratio','pe','dv_ttm'],axis=1,inplace=True)
+
+        df_all['limit_percent']=df_all['down_limit']/df_all['up_limit']
+
+        #是否st或其他
+        df_all['st_or_otherwrong']=0
+        df_all.loc[(df_all['limit_percent']<0.85) & (0.58<df_all['limit_percent']),'st_or_otherwrong']=1
+
+        df_all.drop(['up_limit','down_limit','limit_percent'],axis=1,inplace=True)
+
+        df_all['dayofweek']=pd.to_datetime(df_all['trade_date'],format='%Y%m%d')
+        df_all['dayofweek']=df_all['dayofweek'].dt.dayofweek
+
+        ##排除科创版
+        #print(df_all)
+        df_all=df_all[df_all['ts_code'].str.startswith('688')==False]
+        df_all['class1']=0
+        df_all.loc[df_all['ts_code'].str.startswith('30')==True,'class1']=1
+        df_all.loc[df_all['ts_code'].str.startswith('60')==True,'class1']=2
+        df_all.loc[df_all['ts_code'].str.startswith('00')==True,'class1']=3
+        
+        #===================================================================================================================================#
+
+        #复权后价格
+        df_all['real_price']=df_all['close']*df_all['adj_factor']
+        #df_all['real_open']=df_all['adj_factor']*df_all['open']
+
+
+        #===================================================================================================================================#
+        df_all['real_price_pos']=df_all.groupby('ts_code')['real_price'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+
+        df_all['total_mv_rank']=df_all.groupby('trade_date')['total_mv'].rank(pct=True)
+        df_all['total_mv_rank']=df_all.groupby('ts_code')['total_mv_rank'].shift(1)
+        df_all['total_mv_rank']=df_all['total_mv_rank']*19.9//1
+
+
+        df_all['pb_rank']=df_all.groupby('trade_date')['pb'].rank(pct=True)
+        df_all['pb_rank']=df_all.groupby('ts_code')['pb_rank'].shift(1)
+        #df_all['pb_rank']=df_all['pb_rank']*10//1
+
+        df_all['circ_mv_pct']=(df_all['total_mv']-df_all['circ_mv'])/df_all['total_mv']
+        df_all['circ_mv_pct']=df_all.groupby('trade_date')['circ_mv_pct'].rank(pct=True)
+        df_all['circ_mv_pct']=df_all.groupby('ts_code')['circ_mv_pct'].shift(1)
+        #df_all['circ_mv_pct']=df_all['circ_mv_pct']*10//1
+        
+        df_all['ps_ttm']=df_all.groupby('trade_date')['ps_ttm'].rank(pct=True)
+        df_all['ps_ttm']=df_all.groupby('ts_code')['ps_ttm'].shift(1)
+        #df_all['ps_ttm']=df_all['ps_ttm']*10//1
+        
+        #===================================================================================================================================#
+
+        df_all,_=FEsingle.CloseWithHighLow(df_all,25,'min')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,12,'min')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,5,'min')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,25,'max')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,12,'max')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,5,'max')
+
+        df_all,_=FEsingle.HighLowRange(df_all,5)
+        df_all,_=FEsingle.HighLowRange(df_all,12)
+        df_all,_=FEsingle.HighLowRange(df_all,25)    
+
+        df_all['25_pct_rank_min_diff']=df_all['25_pct_rank_min']-df_all['12_pct_rank_min']
+        df_all['12_pct_rank_min_diff']=df_all['12_pct_rank_min']-df_all['5_pct_rank_min']
+
+        df_all['25_pct_rank_max_diff']=df_all['25_pct_rank_max']-df_all['12_pct_rank_max']
+        df_all['12_pct_rank_max_diff']=df_all['12_pct_rank_max']-df_all['5_pct_rank_max']
+
+        df_all['25_pct_Rangerank_diff']=df_all['25_pct_Rangerank']-df_all['12_pct_Rangerank']
+        df_all['12_pct_Rangerank_diff']=df_all['12_pct_Rangerank']-df_all['5_pct_Rangerank']
+
+        df_all.drop(['change','vol'],axis=1,inplace=True)
+
+        #===================================================================================================================================#
+        #df_all['mvadj']=1
+        #df_all.loc[df_all['total_mv_rank']<11,'mvadj']=0.9
+        #df_all.loc[df_all['total_mv_rank']<7,'mvadj']=0.85
+        #df_all.loc[df_all['total_mv_rank']<4,'mvadj']=0.6
+        #df_all.loc[df_all['total_mv_rank']<2,'mvadj']=0.45
+        #df_all.loc[df_all['total_mv_rank']<1,'mvadj']=0.35
+
+        #是否停
+        df_all['high_stop']=0
+        df_all.loc[df_all['pct_chg']>9.4,'high_stop']=1
+        #df_all.loc[(df_all['pct_chg']<5.2) & (4.8<df_all['pct_chg']),'high_stop']=1
+
+        ###真实价格范围(区分实际股价高低)
+        #df_all['price_real_rank']=df_all.groupby('trade_date')['pre_close'].rank(pct=True)
+        #df_all['price_real_rank']=df_all['price_real_rank']*10//1
+        #1日
+        df_all['chg_rank']=df_all.groupby('trade_date')['pct_chg'].rank(pct=True)
+        #df_all['chg_rank']=df_all['chg_rank']*10//2
+
+        df_all['pct_chg_abs']=df_all['pct_chg'].abs()
+        df_all['pct_chg_abs_rank']=df_all.groupby('trade_date')['pct_chg_abs'].rank(pct=True)
+
+        
+        df_all=FEsingle.PctChgAbsSumRank(df_all,6)
+        df_all=FEsingle.PctChgSumRank(df_all,3)
+        df_all=FEsingle.PctChgSumRank(df_all,6)
+        df_all=FEsingle.PctChgSumRank(df_all,12)
+        df_all=FEsingle.PctChgSumRank(df_all,24)
+
+        df_all=FEsingle.PctChgSum(df_all,3)
+        df_all=FEsingle.PctChgSum(df_all,6)
+        df_all=FEsingle.PctChgSum(df_all,12)
+        df_all=FEsingle.PctChgSum(df_all,24)
+
+        df_all['chg_rank_24_diff']=df_all['chg_rank_24']-df_all['chg_rank_12']
+        df_all['chg_rank_12_diff']=df_all['chg_rank_12']-df_all['chg_rank_6']
+        df_all['chg_rank_6_diff']=df_all['chg_rank_6']-df_all['chg_rank_3']
+
+        df_all['pct_chg_24_diff']=df_all['pct_chg_24']-df_all['pct_chg_12']
+        df_all['pct_chg_12_diff']=df_all['pct_chg_12']-df_all['pct_chg_6']
+        df_all['pct_chg_6_diff']=df_all['pct_chg_6']-df_all['pct_chg_3']
+
+
+        #df_all=FEsingle.AmountChgRank(df_all,12)
+        #df_all=FEsingle.AmountChgRank(df_all,30)   
+
+        #计算三种比例rank
+        dolist=['open','high','low']
+
+        df_all['pct_chg_r']=df_all['pct_chg']
+
+        for curc in dolist:
+            buffer=((df_all[curc]-df_all['pre_close'])*100)/df_all['pre_close']
+            df_all[curc]=buffer
+            df_all[curc]=df_all.groupby('trade_date')[curc].rank(pct=True)
+            #df_all[curc]=df_all[curc]*9.9//2
+
+
+        df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pct_chg_r','real_price_pos'],1)
+        df_all=FEsingle.OldFeaturesRank(df_all,['sm_amount','lg_amount','net_mf_amount'],1)
+        df_all=FEsingle.OldFeaturesRank(df_all,['sm_amount','lg_amount','net_mf_amount'],2)
+        #df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pct_chg_r','pst_amount_rank_12'],2)
+        #df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pct_chg_r','pst_amount_rank_12'],3)
+
+
+        df_all.drop(['pre_close','adj_factor','total_mv','pb','circ_mv','pct_chg_abs'],axis=1,inplace=True)
+        #df_all.drop(['close','pre_close','pct_chg','adj_factor','real_price'],axis=1,inplace=True)
+
+        df_all.dropna(axis=0,how='any',inplace=True)
+        df_all=FEsingle.PredictDaysTrend(df_all,5)
+
+        #df_all['tomorrow_chg_rank'] = np.random.randint(0, 10, df_all.shape[0])
+
+        #df_all.drop(['mvadj'],axis=1,inplace=True)
+
+        df_all.drop(['pct_chg'],axis=1,inplace=True)
+
+        #删除股价过低的票
+        df_all=df_all[df_all['close']>2]
+        #df_all=df_all[df_all['8_pct_rank_min']>0.1]
+        #df_all=df_all[df_all['25_pct_rank_max']>0.1]
+        
+        df_all=df_all[df_all['total_mv_rank']>15]
+        #df_all=df_all[df_all['total_mv_rank']>2]
+        df_all=df_all[df_all['amount']>15000]
+        #df_all=df_all[df_all['circ_mv_pct']>3]
+        #df_all=df_all[df_all['ps_ttm']>3]
+        #df_all=df_all[df_all['pb_rank']>3]
+
+        #暂时不用的列
+        df_all=df_all[df_all['high_stop']==0]
+        df_all=df_all[df_all['st_or_otherwrong']==1]
+        #'tomorrow_chg'
+        df_all.drop(['high_stop','amount','close','real_price'],axis=1,inplace=True)
+        df_all.drop(['st_or_otherwrong'],axis=1,inplace=True)
+        df_all.dropna(axis=0,how='any',inplace=True)
+
+        print(df_all)
+        df_all=df_all.reset_index(drop=True)
+
+        return df_all
+
+    def real_FE(self):
+        #新模型预定版本
+
+        df_data=pd.read_csv('real_now.csv',index_col=0,header=0)
+        df_adj_all=pd.read_csv('real_adj_now.csv',index_col=0,header=0)
+        df_money_all=pd.read_csv('real_moneyflow_now.csv',index_col=0,header=0)
+        df_long_all=pd.read_csv('real_long_now.csv',index_col=0,header=0)
+
+        df_money_all.drop(['buy_sm_vol','sell_sm_vol','buy_md_vol','sell_md_vol','buy_lg_vol','sell_lg_vol','buy_md_vol','sell_md_vol'],axis=1,inplace=True)
+        df_money_all.drop(['buy_elg_vol','buy_elg_amount','sell_elg_vol','sell_elg_amount','net_mf_vol'],axis=1,inplace=True)
+        df_money_all.drop(['buy_md_amount','sell_md_amount'],axis=1,inplace=True)
+
+        df_money_all['sm_amount']=df_money_all['buy_sm_amount']-df_money_all['sell_sm_amount']
+        df_money_all['lg_amount']=df_money_all['buy_lg_amount']-df_money_all['sell_lg_amount']
+
+
+        df_money_all.drop(['buy_sm_amount','sell_sm_amount'],axis=1,inplace=True)
+        df_money_all.drop(['buy_lg_amount','sell_lg_amount'],axis=1,inplace=True)
+
+        df_money_all['sm_amount_pos']=df_money_all.groupby('ts_code')['sm_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+        df_money_all['lg_amount_pos']=df_money_all.groupby('ts_code')['lg_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+        df_money_all['net_mf_amount_pos']=df_money_all.groupby('ts_code')['net_mf_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+
+        df_money_all['sm_amount_pos']=df_money_all.groupby('ts_code')['sm_amount_pos'].shift(1)
+        df_money_all['lg_amount_pos']=df_money_all.groupby('ts_code')['lg_amount_pos'].shift(1)
+        df_money_all['net_mf_amount_pos']=df_money_all.groupby('ts_code')['net_mf_amount_pos'].shift(1)
+
+        df_money_all['sm_amount']=df_money_all.groupby('ts_code')['sm_amount'].shift(1)
+        df_money_all['lg_amount']=df_money_all.groupby('ts_code')['lg_amount'].shift(1)
+        df_money_all['net_mf_amount']=df_money_all.groupby('ts_code')['net_mf_amount'].shift(1)
+
+
+        df_all=pd.merge(df_data, df_adj_all, how='left', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_money_all, how='left', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_long_all, how='left', on=['ts_code','trade_date'])
+
+        print(df_all)
+
+        #df_all.drop(['turnover_rate','volume_ratio','pe','pb'],axis=1,inplace=True)
+        df_all.drop(['turnover_rate','volume_ratio','pe','dv_ttm'],axis=1,inplace=True)
+
+        #这里打一个问号
+        #df_all=df_all[df_all['ts_code'].str.startswith('688')==False]
+
+        #df_all=pd.read_csv(bufferstring,index_col=0,header=0,nrows=100000)
+    
+        #df_all.drop(['change','vol'],axis=1,inplace=True)
+ 
+        df_all['ts_code'] = df_all['ts_code'].astype('str') #将原本的int数据类型转换为文本
+
+        df_all['ts_code']  = df_all['ts_code'].str.zfill(6) #用的时候必须加上.str前缀
+
+        print(df_all)
+        ##排除科创版
+        #print(df_all)
+        df_all[["ts_code"]]=df_all[["ts_code"]].astype(str)
+        df_all=df_all[df_all['ts_code'].str.startswith('688')==False]
+        df_all['class1']=0
+        df_all.loc[df_all['ts_code'].str.startswith('30')==True,'class1']=1
+        df_all.loc[df_all['ts_code'].str.startswith('60')==True,'class1']=2
+        df_all.loc[df_all['ts_code'].str.startswith('00')==True,'class1']=3
+
+        #===================================================================================================================================#
+        
+        #复权后价格
+        df_all['adj_factor']=df_all['adj_factor'].fillna(0)
+        df_all['real_price']=df_all['close']*df_all['adj_factor']
+        
+        df_all['real_price']=df_all.groupby('ts_code')['real_price'].shift(1)
+        df_all['real_price']=df_all['real_price']*(1+df_all['pct_chg']/100)
+
+        #===================================================================================================================================#
+
+        df_all['real_price_pos']=df_all.groupby('ts_code')['real_price'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+
+        df_all['total_mv_rank']=df_all.groupby('trade_date')['total_mv'].rank(pct=True)
+        df_all['total_mv_rank']=df_all.groupby('ts_code')['total_mv_rank'].shift(1)
+        df_all['total_mv_rank']=df_all['total_mv_rank']*19.9//1
+
+        df_all['pb_rank']=df_all.groupby('trade_date')['pb'].rank(pct=True)
+        df_all['pb_rank']=df_all.groupby('ts_code')['pb_rank'].shift(1)
+        #df_all['pb_rank']=df_all['pb_rank']*10//1
+
+        df_all['circ_mv_pct']=(df_all['total_mv']-df_all['circ_mv'])/df_all['total_mv']
+        df_all['circ_mv_pct']=df_all.groupby('trade_date')['circ_mv_pct'].rank(pct=True)
+        df_all['circ_mv_pct']=df_all.groupby('ts_code')['circ_mv_pct'].shift(1)
+        #df_all['circ_mv_pct']=df_all['circ_mv_pct']*10//1
+        
+        df_all['ps_ttm']=df_all.groupby('trade_date')['ps_ttm'].rank(pct=True)
+        df_all['ps_ttm']=df_all.groupby('ts_code')['ps_ttm'].shift(1)
+        #df_all['ps_ttm']=df_all['ps_ttm']*10//1
+
+
+        df_all,_=FEsingle.CloseWithHighLow(df_all,25,'min')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,8,'min')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,25,'max')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,8,'max')
+
+        df_all,_=FEsingle.HighLowRange(df_all,8)
+        df_all,_=FEsingle.HighLowRange(df_all,25)  
+        #===================================================================================================================================#
+
+
+        #是否停
+        df_all['high_stop']=0
+        df_all.loc[df_all['pct_chg']>9.4,'high_stop']=1
+        df_all.loc[(df_all['pct_chg']<5.2) & (4.8<df_all['pct_chg']),'high_stop']=1
+
+
+        #1日
+        df_all['chg_rank']=df_all.groupby('trade_date')['pct_chg'].rank(pct=True)
+        #df_all['chg_rank']=df_all['chg_rank']*10//2
+        df_all['pct_chg_abs']=df_all['pct_chg'].abs()
+        df_all['pct_chg_abs_rank']=df_all.groupby('trade_date')['pct_chg_abs'].rank(pct=True)
+
+        df_all=FEsingle.PctChgSumRank(df_all,3)
+        df_all=FEsingle.PctChgSumRank(df_all,6)
+        df_all=FEsingle.PctChgSumRank(df_all,12)
+
+        df_all=FEsingle.PctChgSum(df_all,3)
+        df_all=FEsingle.PctChgSum(df_all,6)
+        df_all=FEsingle.PctChgSum(df_all,12)
+
+        df_all=FEsingle.AmountChgRank(df_all,12)
+
+        #计算三种比例rank
+        dolist=['open','high','low']
+
+        df_all['pct_chg_r']=df_all['pct_chg']
+
+        for curc in dolist:
+            buffer=((df_all[curc]-df_all['pre_close'])*100)/df_all['pre_close']
+            df_all[curc]=buffer
+            df_all[curc]=df_all.groupby('trade_date')[curc].rank(pct=True)
+            #df_all[curc]=df_all[curc]*10//2
+
+        #df_all=FEsingle.PctChgSumRank_Common(df_all,5,'high')
+            
+
+        df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pct_chg_r','pst_amount_rank_12','real_price_pos'],1)
+        #df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pst_amount_rank_12'],2)
+        #df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pst_amount_rank_12'],3)
+
+
+        #删除市值过低的票
+        df_all=df_all[df_all['close']>3]
+        #df_all=df_all[df_all['chg_rank']>0.7]
+        df_all=df_all[df_all['amount']>15000]
+        #df_all=df_all[df_all['total_mv_rank']<12]
+
+        df_all.drop(['close','pre_close','pct_chg','adj_factor','real_price','amount','total_mv','pb','circ_mv','pct_chg_abs'],axis=1,inplace=True)
+
+        #暂时不用的列
+        df_all=df_all[df_all['high_stop']==0]
+        #df_all=df_all[df_all['st_or_otherwrong']==1]
+
+        #'tomorrow_chg'
+        df_all.drop(['high_stop'],axis=1,inplace=True)
+        #df_all.drop(['st_or_otherwrong'],axis=1,inplace=True)
+
+
+        df_all.dropna(axis=0,how='any',inplace=True)
+
+
+        month_sec=df_all['trade_date'].max()
+        df_all=df_all[df_all['trade_date']==month_sec]
+        print(df_all)
+        df_all=df_all.reset_index(drop=True)
+
+        df_all.to_csv('today_train.csv')
+        dwdw=1
+
+class FE_a29_small(FEbase):
+    #这个版本变为3天预测
+    def __init__(self):
+        pass
+
+    def core(self,DataSetName):
+
+        df_data=pd.read_csv(DataSetName[0],index_col=0,header=0)
+        df_adj_all=pd.read_csv(DataSetName[1],index_col=0,header=0)
+        df_limit_all=pd.read_csv(DataSetName[2],index_col=0,header=0)
+        df_money_all=pd.read_csv(DataSetName[3],index_col=0,header=0)
+        df_long_all=pd.read_csv(DataSetName[4],index_col=0,header=0)
+
+        df_money_all.drop(['buy_sm_vol','sell_sm_vol','buy_md_vol','sell_md_vol','buy_lg_vol','sell_lg_vol','buy_md_vol','sell_md_vol'],axis=1,inplace=True)
+        df_money_all.drop(['buy_elg_vol','buy_elg_amount','sell_elg_vol','sell_elg_amount','net_mf_vol'],axis=1,inplace=True)
+        df_money_all.drop(['buy_md_amount','sell_md_amount'],axis=1,inplace=True)
+
+        df_money_all['sm_amount']=df_money_all['buy_sm_amount']-df_money_all['sell_sm_amount']
+        df_money_all['lg_amount']=df_money_all['buy_lg_amount']-df_money_all['sell_lg_amount']
+
+
+        df_money_all.drop(['buy_sm_amount','sell_sm_amount'],axis=1,inplace=True)
+        df_money_all.drop(['buy_lg_amount','sell_lg_amount'],axis=1,inplace=True)
+
+        #df_money_all['sm_amount_pos']=df_money_all.groupby('ts_code')['sm_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+        #df_money_all['lg_amount_pos']=df_money_all.groupby('ts_code')['lg_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+        #df_money_all['net_mf_amount_pos']=df_money_all.groupby('ts_code')['net_mf_amount'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+
+        #df_money_all['sm_amount_pos']=df_money_all.groupby('ts_code')['sm_amount_pos']
+        #df_money_all['lg_amount_pos']=df_money_all.groupby('ts_code')['lg_amount_pos']
+        #df_money_all['net_mf_amount_pos']=df_money_all.groupby('ts_code')['net_mf_amount_pos']
+
+        #df_money_all['sm_amount']=df_money_all.groupby('ts_code')['sm_amount'].shift(1)
+        #df_money_all['lg_amount']=df_money_all.groupby('ts_code')['lg_amount'].shift(1)
+        #df_money_all['net_mf_amount']=df_money_all.groupby('ts_code')['net_mf_amount'].shift(1)
+
+        df_money_all=FEsingle.InputChgSum(df_money_all,5,'sm_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,5,'lg_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,5,'net_mf_amount')
+
+        df_money_all=FEsingle.InputChgSum(df_money_all,12,'sm_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,12,'lg_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,12,'net_mf_amount')
+
+        df_money_all=FEsingle.InputChgSum(df_money_all,25,'sm_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,25,'lg_amount')
+        df_money_all=FEsingle.InputChgSum(df_money_all,25,'net_mf_amount')
+
+        #df_money_all['sm_amount_25_diff']=df_money_all['sm_amount_25']-df_money_all['sm_amount_12']
+        #df_money_all['sm_amount_12_diff']=df_money_all['sm_amount_12']-df_money_all['sm_amount_5']
+
+        #df_money_all['lg_amount_25_diff']=df_money_all['lg_amount_25']-df_money_all['lg_amount_12']
+        #df_money_all['lg_amount_12_diff']=df_money_all['lg_amount_12']-df_money_all['lg_amount_5']
+
+        #df_money_all['net_mf_amount_25_diff']=df_money_all['net_mf_amount_25']-df_money_all['net_mf_amount_12']
+        #df_money_all['net_mf_amount_12_diff']=df_money_all['net_mf_amount_12']-df_money_all['net_mf_amount_5']
+
+
+        print(df_money_all)
+
+        df_all=pd.merge(df_data, df_adj_all, how='inner', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_limit_all, how='inner', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_money_all, how='inner', on=['ts_code','trade_date'])
+        df_all=pd.merge(df_all, df_long_all, how='inner', on=['ts_code','trade_date'])
+        df_all.drop(['turnover_rate','volume_ratio','pe','dv_ttm'],axis=1,inplace=True)
+
+        df_all['limit_percent']=df_all['down_limit']/df_all['up_limit']
+
+        #是否st或其他
+        df_all['st_or_otherwrong']=0
+        df_all.loc[(df_all['limit_percent']<0.85) & (0.58<df_all['limit_percent']),'st_or_otherwrong']=1
+
+        df_all.drop(['up_limit','down_limit','limit_percent'],axis=1,inplace=True)
+
+        df_all['dayofweek']=pd.to_datetime(df_all['trade_date'],format='%Y%m%d')
+        df_all['dayofweek']=df_all['dayofweek'].dt.dayofweek
+
+        ##排除科创版
+        #print(df_all)
+        df_all=df_all[df_all['ts_code'].str.startswith('688')==False]
+        df_all['class1']=0
+        df_all.loc[df_all['ts_code'].str.startswith('30')==True,'class1']=1
+        df_all.loc[df_all['ts_code'].str.startswith('60')==True,'class1']=2
+        df_all.loc[df_all['ts_code'].str.startswith('00')==True,'class1']=3
+        
+        #===================================================================================================================================#
+
+        #复权后价格
+        df_all['real_price']=df_all['close']*df_all['adj_factor']
+        #df_all['real_open']=df_all['adj_factor']*df_all['open']
+
+
+        #===================================================================================================================================#
+        df_all['real_price_pos']=df_all.groupby('ts_code')['real_price'].rolling(20).apply(lambda x: rollingRankSciPyB(x)).reset_index(0,drop=True)
+
+        df_all['total_mv_rank']=df_all.groupby('trade_date')['total_mv'].rank(pct=True)
+        df_all['total_mv_rank']=df_all.groupby('ts_code')['total_mv_rank'].shift(1)
+        df_all['total_mv_rank']=df_all['total_mv_rank']*19.9//1
+
+
+        df_all['pb_rank']=df_all.groupby('trade_date')['pb'].rank(pct=True)
+        df_all['pb_rank']=df_all.groupby('ts_code')['pb_rank'].shift(1)
+        #df_all['pb_rank']=df_all['pb_rank']*10//1
+
+        df_all['circ_mv_pct']=(df_all['total_mv']-df_all['circ_mv'])/df_all['total_mv']
+        df_all['circ_mv_pct']=df_all.groupby('trade_date')['circ_mv_pct'].rank(pct=True)
+        df_all['circ_mv_pct']=df_all.groupby('ts_code')['circ_mv_pct'].shift(1)
+        #df_all['circ_mv_pct']=df_all['circ_mv_pct']*10//1
+        
+        df_all['ps_ttm']=df_all.groupby('trade_date')['ps_ttm'].rank(pct=True)
+        df_all['ps_ttm']=df_all.groupby('ts_code')['ps_ttm'].shift(1)
+        #df_all['ps_ttm']=df_all['ps_ttm']*10//1
+        
+        #===================================================================================================================================#
+
+        df_all,_=FEsingle.CloseWithHighLow(df_all,25,'min')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,12,'min')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,5,'min')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,25,'max')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,12,'max')
+        df_all,_=FEsingle.CloseWithHighLow(df_all,5,'max')
+
+        df_all,_=FEsingle.HighLowRange(df_all,5)
+        df_all,_=FEsingle.HighLowRange(df_all,12)
+        df_all,_=FEsingle.HighLowRange(df_all,25)    
+
+        df_all['25_pct_rank_min_diff']=df_all['25_pct_rank_min']-df_all['12_pct_rank_min']
+        df_all['12_pct_rank_min_diff']=df_all['12_pct_rank_min']-df_all['5_pct_rank_min']
+
+        df_all['25_pct_rank_max_diff']=df_all['25_pct_rank_max']-df_all['12_pct_rank_max']
+        df_all['12_pct_rank_max_diff']=df_all['12_pct_rank_max']-df_all['5_pct_rank_max']
+
+        df_all['25_pct_Rangerank_diff']=df_all['25_pct_Rangerank']-df_all['12_pct_Rangerank']
+        df_all['12_pct_Rangerank_diff']=df_all['12_pct_Rangerank']-df_all['5_pct_Rangerank']
+
+        df_all.drop(['change','vol'],axis=1,inplace=True)
+
+        #===================================================================================================================================#
+        #df_all['mvadj']=1
+        #df_all.loc[df_all['total_mv_rank']<11,'mvadj']=0.9
+        #df_all.loc[df_all['total_mv_rank']<7,'mvadj']=0.85
+        #df_all.loc[df_all['total_mv_rank']<4,'mvadj']=0.6
+        #df_all.loc[df_all['total_mv_rank']<2,'mvadj']=0.45
+        #df_all.loc[df_all['total_mv_rank']<1,'mvadj']=0.35
+
+        #是否停
+        df_all['high_stop']=0
+        df_all.loc[df_all['pct_chg']>9.4,'high_stop']=1
+        #df_all.loc[(df_all['pct_chg']<5.2) & (4.8<df_all['pct_chg']),'high_stop']=1
+
+        ###真实价格范围(区分实际股价高低)
+        #df_all['price_real_rank']=df_all.groupby('trade_date')['pre_close'].rank(pct=True)
+        #df_all['price_real_rank']=df_all['price_real_rank']*10//1
+        #1日
+        df_all['chg_rank']=df_all.groupby('trade_date')['pct_chg'].rank(pct=True)
+        #df_all['chg_rank']=df_all['chg_rank']*10//2
+
+        df_all['pct_chg_abs']=df_all['pct_chg'].abs()
+        df_all['pct_chg_abs_rank']=df_all.groupby('trade_date')['pct_chg_abs'].rank(pct=True)
+
+        
+        df_all=FEsingle.PctChgAbsSumRank(df_all,6)
+        df_all=FEsingle.PctChgSumRank(df_all,3)
+        df_all=FEsingle.PctChgSumRank(df_all,6)
+        df_all=FEsingle.PctChgSumRank(df_all,12)
+        df_all=FEsingle.PctChgSumRank(df_all,24)
+
+        df_all=FEsingle.PctChgSum(df_all,3)
+        df_all=FEsingle.PctChgSum(df_all,6)
+        df_all=FEsingle.PctChgSum(df_all,12)
+        df_all=FEsingle.PctChgSum(df_all,24)
+
+        df_all['chg_rank_24_diff']=df_all['chg_rank_24']-df_all['chg_rank_12']
+        df_all['chg_rank_12_diff']=df_all['chg_rank_12']-df_all['chg_rank_6']
+        df_all['chg_rank_6_diff']=df_all['chg_rank_6']-df_all['chg_rank_3']
+
+        df_all['pct_chg_24_diff']=df_all['pct_chg_24']-df_all['pct_chg_12']
+        df_all['pct_chg_12_diff']=df_all['pct_chg_12']-df_all['pct_chg_6']
+        df_all['pct_chg_6_diff']=df_all['pct_chg_6']-df_all['pct_chg_3']
+
+
+        #df_all=FEsingle.AmountChgRank(df_all,12)
+        #df_all=FEsingle.AmountChgRank(df_all,30)   
+
+        #计算三种比例rank
+        dolist=['open','high','low']
+
+        df_all['pct_chg_r']=df_all['pct_chg']
+
+        for curc in dolist:
+            buffer=((df_all[curc]-df_all['pre_close'])*100)/df_all['pre_close']
+            df_all[curc]=buffer
+            df_all[curc]=df_all.groupby('trade_date')[curc].rank(pct=True)
+            #df_all[curc]=df_all[curc]*9.9//2
+
+
+        df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pct_chg_r','real_price_pos'],1)
+        df_all=FEsingle.OldFeaturesRank(df_all,['sm_amount','lg_amount','net_mf_amount'],1)
+        df_all=FEsingle.OldFeaturesRank(df_all,['sm_amount','lg_amount','net_mf_amount'],2)
+        #df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pct_chg_r','pst_amount_rank_12'],2)
+        #df_all=FEsingle.OldFeaturesRank(df_all,['open','high','low','pct_chg_r','pst_amount_rank_12'],3)
+
+
+        df_all.drop(['pre_close','adj_factor','total_mv','pb','circ_mv','pct_chg_abs'],axis=1,inplace=True)
+        #df_all.drop(['close','pre_close','pct_chg','adj_factor','real_price'],axis=1,inplace=True)
+
+        df_all.dropna(axis=0,how='any',inplace=True)
+        df_all=FEsingle.PredictDaysTrend(df_all,5)
+
+        #df_all['tomorrow_chg_rank'] = np.random.randint(0, 10, df_all.shape[0])
+
+        #df_all.drop(['mvadj'],axis=1,inplace=True)
+
+        df_all.drop(['pct_chg'],axis=1,inplace=True)
+
+        #删除股价过低的票
+        df_all=df_all[df_all['close']>2]
+        #df_all=df_all[df_all['8_pct_rank_min']>0.1]
+        #df_all=df_all[df_all['25_pct_rank_max']>0.1]
+        
+        df_all=df_all[df_all['total_mv_rank']<10]
+        #df_all=df_all[df_all['total_mv_rank']>2]
+        df_all=df_all[df_all['amount']>15000]
+        #df_all=df_all[df_all['circ_mv_pct']>3]
+        #df_all=df_all[df_all['ps_ttm']>3]
+        #df_all=df_all[df_all['pb_rank']>3]
+
+        #暂时不用的列
+        df_all=df_all[df_all['high_stop']==0]
+        df_all=df_all[df_all['st_or_otherwrong']==1]
+        #'tomorrow_chg'
+        df_all.drop(['high_stop','amount','close','real_price'],axis=1,inplace=True)
+        df_all.drop(['st_or_otherwrong'],axis=1,inplace=True)
+        df_all.dropna(axis=0,how='any',inplace=True)
 
         print(df_all)
         df_all=df_all.reset_index(drop=True)
@@ -1424,7 +2248,7 @@ class FE_a29_Volatility(FEbase):
         #'tomorrow_chg'
         df_all.drop(['high_stop','amount','close','real_price'],axis=1,inplace=True)
         df_all.drop(['st_or_otherwrong'],axis=1,inplace=True)
-        #df_all.dropna(axis=0,how='any',inplace=True)
+        df_all.dropna(axis=0,how='any',inplace=True)
 
         print(df_all)
         df_all=df_all.reset_index(drop=True)
@@ -1837,7 +2661,7 @@ class FE_a31(FEbase):
         #'tomorrow_chg'
         df_all.drop(['high_stop','amount','close','real_price'],axis=1,inplace=True)
         df_all.drop(['st_or_otherwrong'],axis=1,inplace=True)
-        #df_all.dropna(axis=0,how='any',inplace=True)
+        df_all.dropna(axis=0,how='any',inplace=True)
 
         print(df_all)
         df_all=df_all.reset_index(drop=True)
